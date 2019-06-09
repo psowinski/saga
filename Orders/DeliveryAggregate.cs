@@ -1,46 +1,59 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 
 namespace Orders
 {
-   public class DeliveryState : State
+   [DisplayName("SendEvent")]
+   public class SendEvent : Event
    {
-      public DeliveryState(string streamId) : base(streamId)
-      {
-      }
-
-      public string OrderStreamId;
-      public List<string> Details = new List<string>();
-
-      public void Apply(OrderSentEvent evn)
-      {
-         base.Apply(evn);
-         OrderStreamId = evn.OrderStreamId;
-         Details.AddRange(evn.Details);
-      }
+      public string PaymentStreamId = "";
+      public string OrderStreamId = "";
+      public List<string> Items = new List<string>();
    }
 
-   public class OrderSentEvent : Event
+   public class DeliveryState : State
    {
-      public OrderSentEvent(string streamId, int version) : base(streamId, version)
-      {
-      }
-
-      public string OrderStreamId;
-      public List<string> Details;
+      public string PaymentStreamId = "";
+      public string OrderStreamId = "";
+      public List<string> Items = new List<string>();
    }
 
    public class DeliveryAggregate
    {
-      public DeliveryState Zero(string streamId) { return new DeliveryState(streamId); }
-
-      public List<Event> Send(DeliveryState state, string orderStreamId, IEnumerable<string> details)
+      public DeliveryState Zero(string streamId)
       {
-         return new List<Event> { new OrderSentEvent(state.StreamId, state.Version + 1)
+         return new DeliveryState
          {
+            StreamId = streamId
+         };
+      }
+
+      public SendEvent Send(DeliveryState state, string paymentStreamId, string orderStreamId, IEnumerable<string> items)
+      {
+         return new SendEvent
+         {
+            StreamId = state.StreamId,
+            Version = state.Version + 1,
             OrderStreamId = orderStreamId,
-            Details = details.ToList()
-         }};
+            Items = items.ToList()
+         };
+      }
+
+      public DeliveryState Apply(DeliveryState state, SendEvent evn)
+      {
+         if (state.Version + 1 != evn.Version) throw new ArgumentException(nameof(evn.Version));
+         if (state.StreamId != evn.StreamId) throw new ArgumentException(nameof(evn.StreamId));
+
+         return new DeliveryState
+         {
+            StreamId = evn.StreamId,
+            Version = evn.Version,
+            PaymentStreamId = evn.PaymentStreamId,
+            OrderStreamId = evn.OrderStreamId,
+            Items = evn.Items.ToList()
+         };
       }
    }
 }

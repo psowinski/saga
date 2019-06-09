@@ -1,45 +1,54 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Orders
 {
-   public class OrderPaidEvent : Event
+   [DisplayName("PaidEvent")]
+   public class PaidEvent : Event
    {
-      public OrderPaidEvent(string streamId, int version) : base(streamId, version)
-      {
-         Type = nameof(OrderPaidEvent);
-      }
-
-      public string OrderStreamId;
-      public decimal Amount;
+      public string OrderStreamId = "";
+      public decimal Amount = 0.0m;
    }
 
    public class PaymentState : State
    {
-      public PaymentState(string streamId) : base(streamId) {}
-
-      public string OrderStreamId;
-      public decimal Amount;
-
-      public void Apply(OrderPaidEvent evn)
-      {
-         base.Apply(evn);
-         OrderStreamId = evn.OrderStreamId;
-         Amount = evn.Amount;
-      }
+      public string OrderStreamId = "";
+      public decimal Amount = 0.0m;
    }
 
    public class PaymentAggregate
    {
-      public PaymentState Zero(string streamId) { return new PaymentState(streamId); }
-
-      public List<Event> Pay(PaymentState state, string orderStreamId, decimal amount)
+      public PaymentState Zero(string streamId)
       {
-         return new List<Event> { new OrderPaidEvent(state.StreamId, state.Version + 1)
+         return new PaymentState
          {
+            StreamId = streamId
+         };
+      }
+
+      public PaidEvent Pay(PaymentState state, string orderStreamId, decimal amount)
+      {
+         return new PaidEvent
+         {
+            StreamId = state.StreamId,
+            Version = state.Version + 1,
             OrderStreamId = orderStreamId,
             Amount = amount
-         }};
+         };
+      }
+
+      public PaymentState Apply(PaymentState state, PaidEvent evn)
+      {
+         if (state.Version + 1 != evn.Version) throw new ArgumentException(nameof(evn.Version));
+         if (state.StreamId != evn.StreamId) throw new ArgumentException(nameof(evn.StreamId));
+
+         return new PaymentState
+         {
+            StreamId = evn.StreamId,
+            Version = evn.Version + 1,
+            OrderStreamId = evn.OrderStreamId,
+            Amount = evn.Amount
+         };
       }
    }
 }

@@ -1,84 +1,86 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 
 namespace Orders
 {
-   public class AddedToOrderEvent : Event
+   [DisplayName("ItemAddedEvent")]
+   public class ItemAddedEvent : Event
    {
-      public AddedToOrderEvent(string streamId, int version) : base(streamId, version)
-      {
-         Type = nameof(AddedToOrderEvent);
-      }
-
-      public string Details;
-      public decimal Price;
+      public string Description = "";
+      public decimal Cost = 0.0m;
    }
 
-   public class CheckoutEvent : Event
+   [DisplayName("CheckedEvent")]
+   public class CheckedEvent : Event
    {
-      public CheckoutEvent(string streamId, int version) : base(streamId, version)
-      {
-         Type = nameof(CheckoutEvent);
-      }
    }
 
    public class OrderState : State
    {
-      public OrderState(string streamId) : base(streamId) {}
-
-      public List<string> Details = new List<string>();
-      public decimal TotalCost = 0;
-
-      private void Apply(AddedToOrderEvent evn)
-      {
-         base.Apply(evn);
-         Details.Add(evn.Details);
-         TotalCost += evn.Price;
-      }
-
-      public bool Checkout;
-      private void Apply(CheckoutEvent evn)
-      {
-         base.Apply(evn);
-         Checkout = true;
-      }
-
-      public new void Apply(Event evn)
-      {
-         switch (evn)
-         {
-            case AddedToOrderEvent ae:
-               Apply(ae);
-               break;
-            case CheckoutEvent ce:
-               Apply(ce);
-               break;
-         }
-      }
-
-      public void Apply(IEnumerable<Event> events)
-      {
-         foreach (var @event in events)
-            Apply(@events);
-      }
+      public List<string> Items = new List<string>();
+      public decimal TotalCost = 0.0m;
+      public bool Checked = false;
    }
 
    public class OrdersAggregate
    {
-      public OrderState Zero(string streamId) { return new OrderState(streamId); }
-
-      public List<Event> AddToOrder(OrderState state, string details, decimal price)
+      public OrderState Zero(string streamId)
       {
-         return new List<Event> {new AddedToOrderEvent(state.StreamId, state.Version + 1)
+         return new OrderState
          {
-            Details = details,
-            Price = price
-         }};
+            StreamId = streamId,
+         };
       }
 
-      public List<Event> Checkout(OrderState state)
+      public ItemAddedEvent AddItem(OrderState state, string description, decimal cost)
       {
-         return new List<Event> {new CheckoutEvent(state.StreamId, state.Version + 1)};
+         return new ItemAddedEvent
+         {
+            StreamId = state.StreamId,
+            Version = state.Version + 1,
+            Description = description,
+            Cost = cost
+         };
+      }
+
+      public CheckedEvent Checkout(OrderState state)
+      {
+         return new CheckedEvent
+         {
+            StreamId = state.StreamId,
+            Version = state.Version + 1
+         };
+      }
+
+      public OrderState Apply(OrderState state, Event evn)
+      {
+         if (state.Version + 1 != evn.Version) throw new ArgumentException(nameof(evn.Version));
+         if (state.StreamId != evn.StreamId) throw new ArgumentException(nameof(evn.StreamId));
+
+         switch (evn)
+         {
+            case ItemAddedEvent itemAdded:
+               if (state.Checked) throw new ArgumentException(nameof(state));
+               return new OrderState
+               {
+                  StreamId = evn.StreamId,
+                  Version = evn.Version,
+                  Items = state.Items.Append(itemAdded.Description).ToList(),
+                  TotalCost = state.TotalCost + itemAdded.Cost
+               };
+            case CheckedEvent checkedEvn:
+               return new OrderState
+               {
+                  StreamId = evn.StreamId,
+                  Version = evn.Version,
+                  Items = state.Items.ToList(),
+                  TotalCost = state.TotalCost,
+                  Checked = true
+               };
+         }
+         throw new Exception(nameof(evn));
       }
    }
 }
