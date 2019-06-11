@@ -1,56 +1,33 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Linq;
+using System.Threading.Tasks;
 using Orders;
-using Persistence;
 
 namespace Runner
 {
    public class Bus
    {
-      private readonly Database db = new Database();
+      private readonly Persistence persistence = new Persistence();
       private readonly BuyingSaga buyingSaga;
 
       public Bus()
       {
-         buyingSaga = new BuyingSaga(this);
+         buyingSaga = new BuyingSaga(this, new Persistence());
       }
 
-      public void Pipe(Event evn)
+      public Task Pipe(Event evn) =>
+         Pipe(new[] {evn});
+
+      public async Task Pipe(IEnumerable<Event> events)
       {
-         var inArray = new[] {evn};
-         Save(inArray);
-         Process(inArray);
+         await this.persistence.Save(events);
+         await Process(events);
       }
 
-      public void Pipe(IEnumerable<Event> events)
-      {
-         Save(events);
-         Process(events);
-      }
+      private Task Process(IEnumerable<Event> events) =>
+         Task.WhenAll(events.Select(OnEvent).ToList());
 
-      private void Process(IEnumerable<Event> events)
-      {
-         foreach (var evn in events)
-            OnEvent(evn);
-      }
-
-      public void OnEvent(Event evn)
-      {
+      private Task OnEvent(Event evn) =>
          this.buyingSaga.OnEvent(evn);
-      }
-
-      private void Save(IEnumerable<Event> events)
-      {
-         var settings = new JsonSerializerSettings { SerializationBinder = new DisplayNameSerializationBinder() };
-         foreach (var evn in events)
-            db.Save(JsonConvert.SerializeObject(evn, settings));
-      }
-      public List<Event> Load(string streamId)
-      {
-         var json = this.db.Load(streamId);
-         var settings = new JsonSerializerSettings { SerializationBinder = new DisplayNameSerializationBinder() };
-         var events = JsonConvert.DeserializeObject<List<Event>>(json, settings);
-         return events;
-      }
    }
 }
