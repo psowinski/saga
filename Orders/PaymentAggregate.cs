@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 
-namespace Orders
+namespace Domain
 {
    [DisplayName("PaidEvent")]
    public class PaidEvent : Event

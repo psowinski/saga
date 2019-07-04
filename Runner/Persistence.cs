@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Domain;
 using Newtonsoft.Json;
-using Orders;
-using Persistence;
+using Infrastructure;
 
 namespace Runner
 {
@@ -11,6 +11,8 @@ namespace Runner
    {
       private static readonly Database Db = new Database();
       private readonly JsonSerializerSettings settings;
+
+      public static string Dump() => Db.Dump();
 
       public Persistence()
       {
@@ -21,26 +23,41 @@ namespace Runner
          };
       }
 
-      public Task Save(IEnumerable<Event> events)
+      public async Task Save(IEnumerable<Event> events)
       {
-         return Task.WhenAll(events.Select(evn => Db.Save(JsonConvert.SerializeObject(evn, this.settings))).ToList());
+         foreach (var evn in events)
+            await Save(evn);
       }
 
-      public async Task<List<Event>> Load(string streamId)
+      public Task Save(Event evn) => Db.Save(JsonConvert.SerializeObject(evn, this.settings));
+
+      public Task<List<Event>> Load(string streamId) => Load(streamId, 0);
+
+      public Task<List<Event>> Load(string streamId, int fromVersion) => Load(streamId, fromVersion, 0);
+
+      public async Task<List<Event>> Load(string streamId, int fromVersion, int toVersion)
       {
-         var json = await Db.Load(streamId);
+         var json = await Db.Load(streamId, fromVersion, toVersion);
          var events = JsonConvert.DeserializeObject<List<Event>>(json, this.settings);
          return events;
       }
 
-      public async Task<OrderState> GetOrder(string streamId)
+      public async Task<Event> LoadEvent(string streamId, int version)
       {
-         var orders = new OrdersAggregate();
+         var events = await Load(streamId, version, version);
+         return events.FirstOrDefault();
+      }
 
-         var zero = orders.Zero(streamId);
+      public string GetCategoryStreamId(string category) => "ByCategoryIndex-" + category;
+
+      public async Task<int> GetLastStreamVersion(string streamId) => await Db.FindLastVersion(streamId);
+
+      public async Task<T> GetState<T>(string streamId, IAggregate<T> aggregate)
+      {
+         var zero = aggregate.Zero(streamId);
          var events = await Load(streamId);
 
-         return events.Aggregate(zero, (acc, evn) => orders.Apply(acc, evn));
+         return events.Aggregate(zero, aggregate.Apply);
       }
    }
 }

@@ -1,4 +1,4 @@
-﻿namespace Orders
+﻿namespace Domain
 {
    public abstract class Event
    {

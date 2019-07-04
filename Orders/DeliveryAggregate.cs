@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 
-namespace Orders
+namespace Domain
 {
    [DisplayName("SendEvent")]
    public class SendEvent : Event
@@ -37,6 +37,7 @@ namespace Orders
             StreamId = state.StreamId,
             Version = state.Version + 1,
             OrderStreamId = orderStreamId,
+            PaymentStreamId = paymentStreamId,
             Items = items.ToList()
          };
       }

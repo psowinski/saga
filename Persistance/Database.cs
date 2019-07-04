@@ -1,32 +1,111 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace Persistence
+namespace Infrastructure
 {
    public class Database
    {
+      private readonly JsonSerializerSettings settings = new JsonSerializerSettings() { MetadataPropertyHandling = MetadataPropertyHandling.Ignore };
+
+
+      private readonly object dataLock = new object();
       private readonly List<dynamic> data = new List<dynamic>();
       public Task Save(string json)
       {
-         json = json.Replace("$type", "EventType");
-         lock (data)
+         lock (dataLock)
          {
-            var obj = JsonConvert.DeserializeObject<dynamic>(json);
-            this.data.Add(obj);
+            var evn = DeserializeEvent(json);
+
+            UniqueIndex(evn);
+            StoreEvent(evn);
+            CategoryIndex(evn);
             return Task.CompletedTask;
          }
       }
 
-      public Task<string> Load(string id)
+      private dynamic DeserializeEvent(string json)
       {
-         lock (data)
+         var evn = JsonConvert.DeserializeObject<dynamic>(json, this.settings);
+         return evn;
+      }
+
+      private void StoreEvent(dynamic evn)
+      {
+         this.data.Add(evn);
+      }
+
+      private void UniqueIndex(dynamic evn)
+      {
+         (string streamId, int version) = (evn.StreamId, evn.Version);
+         if (this.data.Any(x => x.StreamId == streamId && x.Version == version))
+            throw new Exception("Version is not unique");
+      }
+
+      private void CategoryIndex(dynamic evn)
+      {
+         string eventStreamId = evn.StreamId;
+         var streamId = "ByCategoryIndex-" + eventStreamId.Substring(0, eventStreamId.IndexOf('-'));
+         var version = LastVersion(streamId) + 1;
+
+         this.data.Add(CreateCategoryIndexEvent(streamId, version, evn));
+      }
+
+      private dynamic CreateCategoryIndexEvent(string streamId, int version, dynamic evn)
+      {
+         return DeserializeEvent("{" +
+                                     "'$type': 'ByCategoryIndex'," +
+                                    $"'StreamId': '{streamId}'," +
+                                    $"'Version': {version}," +
+                                    $"'RefStreamId': '{(string)evn.StreamId}'," +
+                                    $"'RefVersion': {(int)evn.Version}," +
+                                    $"'RefType': '{(string)evn["$type"]}'" +
+                                 "}");
+      }
+
+      private int LastVersion(string streamId)
+      {
+         return this.data.Where(x => x.StreamId == streamId)
+                 .Select(x => (int)x.Version)
+                 .DefaultIfEmpty(0)
+                 .Max();
+      }
+
+      public Task<string> Load(string streamId, int fromVersion, int toVersion)
+      {
+         lock (dataLock)
          {
-            var events = this.data.Where(x => x.StreamId == id);
-            var json = JsonConvert.SerializeObject(events);
-            json = json.Replace("EventType", "$type");
+            var events = this.data.Where(
+               x => x.StreamId == streamId 
+                    && x.Version >= fromVersion
+                    && (toVersion <= 0 || x.Version <= toVersion));
+
+            var json = JsonConvert.SerializeObject(events, settings);
             return Task.FromResult(json);
+         }
+      }
+
+      public Task<int> FindLastVersion(string streamId)
+      {
+         lock (dataLock)
+         {
+            return Task.FromResult(LastVersion(streamId));
+         }
+      }
+
+      public string Dump()
+      {
+         lock (dataLock)
+         {
+            return JsonConvert.SerializeObject(this.data, new JsonSerializerSettings
+            {
+               Formatting = Formatting.Indented,
+               MetadataPropertyHandling = MetadataPropertyHandling.Ignore
+            });
          }
       }
    }

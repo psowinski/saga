@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 
-namespace Orders
+namespace Domain
 {
    [DisplayName("ItemAddedEvent")]
    public class ItemAddedEvent : Event
@@ -24,7 +24,7 @@ namespace Orders
       public bool Checked = false;
    }
 
-   public class OrdersAggregate
+   public class OrdersAggregate : IAggregate<OrderState>
    {
       public OrderState Zero(string streamId)
       {

@@ -4,8 +4,16 @@ using System.ComponentModel;
 using System.Linq;
 using Newtonsoft.Json.Serialization;
 
-namespace Orders
+namespace Domain
 {
+   [DisplayName("ByCategoryIndex")]
+   public class ByCategoryIndexEvent : Event
+   {
+      public string RefStreamId = "";
+      public int RefVersion = 0;
+      public string RefType = "";
+   }
+
    public class DisplayNameSerializationBinder : DefaultSerializationBinder
    {
       private readonly Dictionary<string, Type> nameToType;

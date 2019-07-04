@@ -3,12 +3,12 @@ using System.Threading.Tasks;
 
 namespace Runner
 {
-   public static class Saga
+   public static class SagaUtils
    {
       public static Random Rnd = new Random();
       public static async Task DelayedHeader(string msg)
       {
-         await Task.Delay(Saga.Rnd.Next(1000, 10000));
+         await Task.Delay(SagaUtils.Rnd.Next(1000, 10000));
          Console.WriteLine(msg);
       }
 
