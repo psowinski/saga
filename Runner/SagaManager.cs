@@ -24,10 +24,9 @@ namespace Runner
       public ByCategoryIndexEvent Event;
    }
 
-   public class SagaManager
+   public class SagaManager : IServiceTask
    {
       private readonly Persistence persistence= new Persistence();
-      private readonly Network network = new Network();
 
       private readonly Dictionary<string, CategoryProcess> register = new Dictionary<string, CategoryProcess>();
       public void RegisterSaga(string category, string eventType, ISaga saga)
@@ -44,67 +43,10 @@ namespace Runner
             this.register.Add(category, new CategoryProcess {EventTypes = new HashSet<ValueTuple<string, ISaga>>()});
       }
 
-      /*
-       * Wake up on network / timer
-       */
-      private bool onNetwork;
       public async Task Run()
       {
-         var idx = 0;
-         while (true)
-         {
-            await Task.Delay(500);
-
-            await CrashAndRestartService();
-
-            this.onNetwork = this.network.ReceiveLowValueMessage();
-            var onTime = ++idx % 5 == 0;
-
-            if (this.onNetwork || onTime)
-               await Process();
-         }
-      }
-
-      private Random rnd = new Random();
-      private bool restoredAfterCrash = false;
-      private async Task CrashAndRestartService()
-      {
-         if (DidServiceCrash())
-         {
-            await SimulateCrashAndRestart();
-            ResetManagerState();
-         }
-      }
-
-      private bool DidServiceCrash()
-         => rnd.Next(99) < 10;
-
-      private async Task SimulateCrashAndRestart()
-      {
-         await Task.Delay(2000);
-         this.restoredAfterCrash = true;
-      }
-
-      private void ResetManagerState()
-      {
-         foreach (var entry in this.register)
-            entry.Value.LastProcessedVersion = 0;
-      }
-
-      private async Task Process()
-      {
-         try
-         {
-            PrintStatusMessages();
-            var indexEvents = await LoadIndex();
-            await ContinueUnfinishedSagas(indexEvents);
-         }
-         catch (Exception e)
-         {
-            Console.WriteLine(e);
-            ResetManagerState();
-            throw;
-         }
+         var indexEvents = await LoadIndex();
+         await ContinueUnfinishedSagas(indexEvents);
       }
 
       private async Task<IEnumerable<CategoryIndexEvent>> LoadIndex()
@@ -112,20 +54,6 @@ namespace Runner
          var categoryIndices = await Task.WhenAll(this.register.Select(LoadCategoryIndex).ToList());
          var events = categoryIndices.Aggregate((x, y) => x.Union(y));
          return events;
-      }
-
-      private void PrintStatusMessages()
-      {
-         if (this.restoredAfterCrash)
-         {
-            this.restoredAfterCrash = false;
-            Console.WriteLine("-= Saga Manager restored after crash =-");
-         }
-         else
-         {
-            var why = this.onNetwork ? "network" : "time";
-            Console.WriteLine($"Saga Manager was awakened by a [{why}] event.");
-         }
       }
 
       private async Task<IEnumerable<CategoryIndexEvent>> LoadCategoryIndex(KeyValuePair<string, CategoryProcess> reg)
