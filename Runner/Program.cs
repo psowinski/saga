@@ -61,15 +61,13 @@ namespace Runner
 
       private static void RunSagaManager()
       {
-         var service = new ServiceSimulator<SagaManager>(() =>
-         {
-            var sm = new SagaManager();
-            sm.RegisterSaga("order", "CheckedEvent", new BuyingSaga());
-            sm.RegisterSaga("payment", "PaidEvent", new BuyingSaga());
-            sm.RegisterSagaEnd("delivery");
-            return sm;
-         });
-         service.Start();
+         var buyingSagaCfg = new SagaConfiguration();
+         buyingSagaCfg.AddAction("order", "CheckedEvent", new BuyingSaga());
+         buyingSagaCfg.AddAction("payment", "PaidEvent", new BuyingSaga());
+         buyingSagaCfg.AddEndAction("delivery","SendEvent");
+
+         new ServiceSimulator<SagaManager>(() => new SagaManager(buyingSagaCfg))
+            .Start();
       }
 
       private static void RunScenario()

@@ -1,0 +1,47 @@
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace Runner
+{
+   public class SagaConfiguration
+   {
+      private readonly Dictionary<string, Dictionary<string, ISaga>> register = new Dictionary<string, Dictionary<string, ISaga>>();
+
+      private Dictionary<string, ISaga> GetCategoryActions(string category)
+         => this.register.TryGetValue(category, out var actions) ? actions : null;
+
+      private void AddCategoryActions(string category)
+         => this.register[category] = new Dictionary<string, ISaga>();
+
+      private Dictionary<string, ISaga> UpsertCategoryActions(string category)
+      {
+         if(GetCategoryActions(category) == null) AddCategoryActions(category);
+         return GetCategoryActions(category);
+      }
+
+      public void AddAction(string category, string eventType, ISaga action)
+      {
+         var categoryActions = UpsertCategoryActions(category);
+         categoryActions[eventType] = action;
+      }
+
+      public void AddEndAction(string category, string eventType)
+      {
+         var categoryActions = UpsertCategoryActions(category);
+         categoryActions[eventType] = null;
+      }
+
+      public ISaga GetSagaAction(string category, string eventType)
+      {
+         var categoryActions = GetCategoryActions(category);
+         if (categoryActions != null && categoryActions.TryGetValue(eventType, out var action))
+            return action;
+         return null;
+      }
+
+      public bool IsKnownEventType(string category, string eventType)
+         => GetCategoryActions(category)?.ContainsKey(eventType) ?? false;
+
+      public IEnumerable<string> Categories => register.Select(x => x.Key);
+   }
+}

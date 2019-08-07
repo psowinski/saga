@@ -6,15 +6,9 @@ using Domain;
 
 namespace Runner
 {
-   public class CategoryProcess
+   public class IndexEventPerCategory
    {
-      public int LastProcessedVersion;
-      public HashSet<ValueTuple<string, ISaga>> EventTypes;
-   }
-
-   public class CategoryIndexEvent
-   {
-      public CategoryIndexEvent(string category, ByCategoryIndexEvent @event)
+      public IndexEventPerCategory(string category, ByCategoryIndexEvent @event)
       {
          Category = category;
          Event = @event;
@@ -27,20 +21,19 @@ namespace Runner
    public class SagaManager : IServiceTask
    {
       private readonly Persistence persistence= new Persistence();
+      private readonly SagaConfiguration configuration;
+      private readonly Dictionary<string, int> categoryState = new Dictionary<string, int>();
 
-      private readonly Dictionary<string, CategoryProcess> register = new Dictionary<string, CategoryProcess>();
-      public void RegisterSaga(string category, string eventType, ISaga saga)
+      public SagaManager(SagaConfiguration configuration)
       {
-         if (this.register.TryGetValue(category, out var index))
-            index.EventTypes.Add((eventType, saga));
-         else
-            this.register.Add(category, new CategoryProcess {EventTypes = new HashSet<ValueTuple<string, ISaga>> {(eventType, saga)}});
+         this.configuration = configuration;
+         InitializeCategoryState();
       }
 
-      public void RegisterSagaEnd(string category)
+      private void InitializeCategoryState()
       {
-         if (!this.register.TryGetValue(category, out var index))
-            this.register.Add(category, new CategoryProcess {EventTypes = new HashSet<ValueTuple<string, ISaga>>()});
+         foreach (var category in this.configuration.Categories)
+            this.categoryState.Add(category, 0);
       }
 
       public async Task Run()
@@ -49,46 +42,50 @@ namespace Runner
          await ContinueUnfinishedSagas(indexEvents);
       }
 
-      private async Task<IEnumerable<CategoryIndexEvent>> LoadIndex()
+      private async Task<IEnumerable<IndexEventPerCategory>> LoadIndex()
       {
-         var categoryIndices = await Task.WhenAll(this.register.Select(LoadCategoryIndex).ToList());
+         var categoryIndices = await Task.WhenAll(this.categoryState.Select(LoadCategoryIndex).ToList());
          var events = categoryIndices.Aggregate((x, y) => x.Union(y));
          return events;
       }
 
-      private async Task<IEnumerable<CategoryIndexEvent>> LoadCategoryIndex(KeyValuePair<string, CategoryProcess> reg)
+      private async Task<IEnumerable<IndexEventPerCategory>> LoadCategoryIndex(KeyValuePair<string, int> reg)
       {
-         var lastVersion = await this.persistence.GetLastStreamVersion(this.persistence.GetCategoryStreamId(reg.Key));
-         if (reg.Value.LastProcessedVersion >= lastVersion) return Enumerable.Empty<CategoryIndexEvent>();
+         var (category, lastProcessedVersion) = reg;
+         var lastVersion = await this.persistence.GetLastStreamVersion(this.persistence.GetCategoryStreamId(category));
+         if (lastProcessedVersion >= lastVersion) return Enumerable.Empty<IndexEventPerCategory>();
 
          PrintCategoryStatus(reg, lastVersion);
 
-         var categoryIndexEvents = await LoadCategoryIndexEvents(reg.Key, reg.Value.LastProcessedVersion + 1);
-         reg.Value.LastProcessedVersion = lastVersion;
+         var categoryIndexEvents = await LoadCategoryIndexEvents(reg.Key, lastProcessedVersion + 1);
+         UpdateCategoryState(category, lastVersion);
          return categoryIndexEvents;
       }
 
-      private static void PrintCategoryStatus(KeyValuePair<string, CategoryProcess> reg, int lastVersion)
+      public void UpdateCategoryState(string category, int version) => this.categoryState[category] = version;
+
+      private void PrintCategoryStatus(KeyValuePair<string, int> reg, int lastVersion)
       {
          Console.WriteLine(
-            $"Processing {lastVersion - reg.Value.LastProcessedVersion} event(s) of category [{reg.Key}] (ver. {reg.Value.LastProcessedVersion + 1}-{lastVersion}).");
+            $"Processing {lastVersion - reg.Value} event(s) of category [{reg.Key}] (ver. {reg.Value + 1}-{lastVersion}).");
       }
 
-      private async Task<IEnumerable<CategoryIndexEvent>> LoadCategoryIndexEvents(string category, int fromVersion)
+      private async Task<IEnumerable<IndexEventPerCategory>> LoadCategoryIndexEvents(string category, int fromVersion)
       {
          var indexEvents = await this.persistence.Load(this.persistence.GetCategoryStreamId(category), fromVersion);
-         return indexEvents.Select(x => x is ByCategoryIndexEvent evn ? new CategoryIndexEvent(category, evn) : null).Where(x => x != null);
+         return indexEvents.Select(x => x is ByCategoryIndexEvent evn ? new IndexEventPerCategory(category, evn) : null).Where(x => x != null);
       }
 
-      private async Task ContinueUnfinishedSagas(IEnumerable<CategoryIndexEvent> events)
+      private async Task ContinueUnfinishedSagas(IEnumerable<IndexEventPerCategory> events)
       {
          var sagasContinuation = CreateSagasContinuation(events);
          await ContinueSagasExecution(sagasContinuation);
       }
 
-      private IEnumerable<dynamic> CreateSagasContinuation(IEnumerable<CategoryIndexEvent> events)
+      private IEnumerable<dynamic> CreateSagasContinuation(IEnumerable<IndexEventPerCategory> events)
       {
          var eventsToProcess = events
+            .Where(AcceptOnlySagaEventTypes)
             .GroupBy(x => x.Event.RefCorrelationId)
             .Select(g => g.OrderByDescending(e => e.Event.RefTimeStamp).First())
             .Select(lastEvn => CreateSagaTask(lastEvn))
@@ -96,12 +93,13 @@ namespace Runner
          return eventsToProcess;
       }
 
-      private dynamic CreateSagaTask(CategoryIndexEvent categoryEvent)
-      {
-         var saga = this.register[categoryEvent.Category].EventTypes
-            .FirstOrDefault(e => e.Item1 == categoryEvent.Event.RefType).Item2;
+      private bool AcceptOnlySagaEventTypes(IndexEventPerCategory evn)
+         => this.configuration.IsKnownEventType(evn.Category, evn.Event.RefType);
 
-         return saga == null ? null : new { categoryEvent.Event.RefStreamId, categoryEvent.Event.RefVersion, saga};
+      private dynamic CreateSagaTask(IndexEventPerCategory indexEventPerCategory)
+      {
+         var saga = this.configuration.GetSagaAction(indexEventPerCategory.Category, indexEventPerCategory.Event.RefType);
+         return saga == null ? null : new { indexEventPerCategory.Event.RefStreamId, indexEventPerCategory.Event.RefVersion, saga};
       }
 
       private async Task ContinueSagasExecution(IEnumerable<dynamic> sagaTasks)
