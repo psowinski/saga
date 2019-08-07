@@ -4,7 +4,7 @@ using Domain;
 
 namespace Runner
 {
-   public class BuyingSaga : ISaga
+   public class BuyingSagaAction : ISagaAction
    {
       private readonly Bus bus = new Bus();
       private readonly Persistence persistence = new Persistence();

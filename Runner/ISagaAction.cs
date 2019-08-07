@@ -3,7 +3,7 @@ using Domain;
 
 namespace Runner
 {
-   public interface ISaga
+   public interface ISagaAction
    {
       Task ProcessEvent(Event evn);
    }

@@ -5,21 +5,21 @@ namespace Runner
 {
    public class SagaConfiguration
    {
-      private readonly Dictionary<string, Dictionary<string, ISaga>> register = new Dictionary<string, Dictionary<string, ISaga>>();
+      private readonly Dictionary<string, Dictionary<string, ISagaAction>> register = new Dictionary<string, Dictionary<string, ISagaAction>>();
 
-      private Dictionary<string, ISaga> GetCategoryActions(string category)
+      private Dictionary<string, ISagaAction> GetCategoryActions(string category)
          => this.register.TryGetValue(category, out var actions) ? actions : null;
 
       private void AddCategoryActions(string category)
-         => this.register[category] = new Dictionary<string, ISaga>();
+         => this.register[category] = new Dictionary<string, ISagaAction>();
 
-      private Dictionary<string, ISaga> UpsertCategoryActions(string category)
+      private Dictionary<string, ISagaAction> UpsertCategoryActions(string category)
       {
          if(GetCategoryActions(category) == null) AddCategoryActions(category);
          return GetCategoryActions(category);
       }
 
-      public void AddAction(string category, string eventType, ISaga action)
+      public void AddAction(string category, string eventType, ISagaAction action)
       {
          var categoryActions = UpsertCategoryActions(category);
          categoryActions[eventType] = action;
@@ -31,7 +31,7 @@ namespace Runner
          categoryActions[eventType] = null;
       }
 
-      public ISaga GetSagaAction(string category, string eventType)
+      public ISagaAction GetSagaAction(string category, string eventType)
       {
          var categoryActions = GetCategoryActions(category);
          if (categoryActions != null && categoryActions.TryGetValue(eventType, out var action))
