@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Dynamic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -10,7 +11,11 @@ namespace Infrastructure
 {
    public class Database
    {
-      private readonly JsonSerializerSettings settings = new JsonSerializerSettings() { MetadataPropertyHandling = MetadataPropertyHandling.Ignore };
+      private readonly JsonSerializerSettings settings = new JsonSerializerSettings()
+      {
+         MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+         Culture = CultureInfo.InvariantCulture
+      };
 
 
       private readonly object dataLock = new object();
@@ -63,7 +68,9 @@ namespace Infrastructure
                                     $"'Version': {version}," +
                                     $"'RefStreamId': '{(string)evn.StreamId}'," +
                                     $"'RefVersion': {(int)evn.Version}," +
-                                    $"'RefType': '{(string)evn["$type"]}'" +
+                                    $"'RefType': '{(string)evn["$type"]}'," +
+                                    $"'RefCorrelationId': '{(string)evn.CorrelationId}'," +
+                                    $"'RefTimeStamp': '{evn.TimeStamp.ToString("o", CultureInfo.InvariantCulture)}'" +
                                  "}");
       }
 
@@ -104,7 +111,8 @@ namespace Infrastructure
             return JsonConvert.SerializeObject(this.data, new JsonSerializerSettings
             {
                Formatting = Formatting.Indented,
-               MetadataPropertyHandling = MetadataPropertyHandling.Ignore
+               MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+               Culture = CultureInfo.InvariantCulture
             });
          }
       }

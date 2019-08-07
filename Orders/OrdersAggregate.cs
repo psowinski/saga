@@ -5,6 +5,16 @@ using System.Linq;
 
 namespace Domain
 {
+   public class AddItemCommand : Command
+   {
+      public string Description;
+      public decimal Cost;
+   }
+
+   public class CheckoutCommand : Command
+   {
+   }
+
    [DisplayName("ItemAddedEvent")]
    public class ItemAddedEvent : Event
    {
@@ -34,21 +44,41 @@ namespace Domain
          };
       }
 
-      public ItemAddedEvent AddItem(OrderState state, string description, decimal cost)
+      public Event Execute(OrderState state, Command command)
+      {
+         switch (command)
+         {
+            case AddItemCommand addItem:
+               return AddItem(state, addItem);
+            case CheckoutCommand checkout:
+               return Checkout(state, checkout);
+            default:
+               throw new NotImplementedException(nameof(command));
+         }
+      }
+
+      private ItemAddedEvent AddItem(OrderState state, AddItemCommand command)
       {
          return new ItemAddedEvent
          {
+            CorrelationId = command.CorrelationId,
+            TimeStamp = command.TimeStamp,
+
             StreamId = state.StreamId,
             Version = state.Version + 1,
-            Description = description,
-            Cost = cost
+
+            Description = command.Description,
+            Cost = command.Cost
          };
       }
 
-      public CheckedEvent Checkout(OrderState state)
+      private CheckedEvent Checkout(OrderState state, CheckoutCommand command)
       {
          return new CheckedEvent
          {
+            CorrelationId = command.CorrelationId,
+            TimeStamp = command.TimeStamp,
+
             StreamId = state.StreamId,
             Version = state.Version + 1
          };

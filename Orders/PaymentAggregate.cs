@@ -3,6 +3,12 @@ using System.ComponentModel;
 
 namespace Domain
 {
+   public class PayCommand : Command
+   {
+      public string OrderStreamId;
+      public decimal Amount;
+   }
+
    [DisplayName("PaidEvent")]
    public class PaidEvent : Event
    {
@@ -26,14 +32,18 @@ namespace Domain
          };
       }
 
-      public PaidEvent Pay(PaymentState state, string orderStreamId, decimal amount)
+      public PaidEvent Execute(PaymentState state, PayCommand command)
       {
          return new PaidEvent
          {
+            CorrelationId = command.CorrelationId,
+            TimeStamp = command.TimeStamp,
+
             StreamId = state.StreamId,
             Version = state.Version + 1,
-            OrderStreamId = orderStreamId,
-            Amount = amount
+
+            OrderStreamId = command.OrderStreamId,
+            Amount = command.Amount
          };
       }
 

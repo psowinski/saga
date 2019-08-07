@@ -5,6 +5,13 @@ using System.Linq;
 
 namespace Domain
 {
+   public class SendCommand : Command
+   {
+      public string PaymentStreamId;
+      public string OrderStreamId;
+      public IEnumerable<string> Items;
+   }
+
    [DisplayName("SendEvent")]
    public class SendEvent : Event
    {
@@ -30,15 +37,19 @@ namespace Domain
          };
       }
 
-      public SendEvent Send(DeliveryState state, string paymentStreamId, string orderStreamId, IEnumerable<string> items)
+      public SendEvent Send(DeliveryState state, SendCommand command)
       {
          return new SendEvent
          {
+            CorrelationId = command.CorrelationId,
+            TimeStamp = command.TimeStamp,
+
             StreamId = state.StreamId,
             Version = state.Version + 1,
-            OrderStreamId = orderStreamId,
-            PaymentStreamId = paymentStreamId,
-            Items = items.ToList()
+
+            OrderStreamId = command.OrderStreamId,
+            PaymentStreamId = command.PaymentStreamId,
+            Items = command.Items.ToList()
          };
       }
 

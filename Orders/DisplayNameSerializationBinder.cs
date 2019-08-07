@@ -10,8 +10,10 @@ namespace Domain
    public class ByCategoryIndexEvent : Event
    {
       public string RefStreamId = "";
-      public int RefVersion = 0;
+      public int RefVersion;
       public string RefType = "";
+      public string RefCorrelationId = "";
+      public DateTime RefTimeStamp;
    }
 
    public class DisplayNameSerializationBinder : DefaultSerializationBinder
