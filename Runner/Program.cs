@@ -1,31 +1,99 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 namespace Runner
 {
    class Program
    {
-      static async Task Main(string[] args)
+      static void Main(string[] args)
       {
-         Console.WriteLine("Hello, type number of scenarios to run or q to quit.");
+         RunSagaManager();
+         RunApp();
+      }
 
+      private static void RunApp()
+      {
+         PrintMenu();
+         while (true)
+         {
+            var msg = Console.ReadKey();
+            switch (msg.Key)
+            {
+               case ConsoleKey.Escape:
+                  return;
+               case ConsoleKey.D:
+                  Console.WriteLine(Persistence.Dump());
+                  break;
+               case ConsoleKey.S:
+                  DumpToFile();
+                  break;
+               case ConsoleKey.T:
+                  SetTasksDelay();
+                  break;
+               case ConsoleKey.R:
+                  RunScenario();
+                  break;
+               default:
+                  PrintMenu();
+                  break;
+            }
+         }
+      }
+
+      private static void DumpToFile()
+      {
+         Console.WriteLine("Give file path");
+         File.WriteAllText(Console.ReadLine(), Persistence.Dump());
+      }
+
+      private static void PrintMenu()
+      {
+         Console.WriteLine("\nHello," +
+                           "\n ESC - quit" +
+                           "\n R - run scenarios" +
+                           "\n D - print database" +
+                           "\n S - print database to file" +
+                           "\n T - set tasks delay");
+      }
+
+      private static void RunSagaManager()
+      {
          var sm = new SagaManager();
          sm.RegisterSaga("order", "CheckedEvent", new BuyingSaga());
          sm.RegisterSaga("payment", "PaidEvent", new BuyingSaga());
+         sm.RegisterSagaEnd("delivery");
          sm.Run();
+      }
 
-         while (true)
+      private static void RunScenario()
+      {
+         Console.WriteLine("How many user scenarios should be run ?");
+         if (int.TryParse(Console.ReadLine(), out var howMany) && howMany > 0)
          {
-            var msg = Console.ReadLine();
-            if (msg == "q") return;
-            if (msg == "d") Console.WriteLine(Persistence.Dump());
-            if (int.TryParse(msg, out var times) && times > 0)
-            {
-               Console.WriteLine($"Running {times} user scenarios.");
-               UserScenario.RunRange(times);
-            }
+            Console.WriteLine($"Running {howMany} user scenarios.");
+            UserScenario.RunRange(howMany);
          }
+      }
+
+      private static void SetTasksDelay()
+      {
+         Console.WriteLine("Type max delay (0-max), or range (min-max) in seconds");
+         var range = Console.ReadLine().Split('-');
+         var max = 0;
+         var min = 0;
+         if (range.Length == 2)
+         {
+            int.TryParse(range[0], out min);
+            int.TryParse(range[1], out max);
+         }
+         else if (range.Length == 1)
+            int.TryParse(range[0], out max);
+
+         SagaUtils.MinTaskDelay = min * 1000;
+         SagaUtils.MaxTaskDelay = max * 1000;
       }
    }
 }

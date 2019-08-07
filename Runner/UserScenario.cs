@@ -28,21 +28,47 @@ namespace Runner
          var orders = new OrdersAggregate();
          var order = orders.Zero(SagaUtils.GenerateOrderId());
 
-         await SagaUtils.DelayedHeader($"[{order.StreamId}] Adding milk - 3.00");
+         //Command 1: Add first item
+         await SagaUtils.WaitSomeTime();
+         var addItem1 = new AddItemCommand
+         {
+            CorrelationId = SagaUtils.GenerateCorrelationId(),
+            TimeStamp = SagaUtils.GenerateTimeStamp(),
 
-         var evnAdded1 = orders.AddItem(order, "Milk", 3.0m);
-         await bus.Pipe(evnAdded1);
+            Description = "Milk",
+            Cost = 3.0m
+         };
+         Console.WriteLine($"[{addItem1.CorrelationId}/{order.StreamId}] Adding milk - 3.00");
 
-         await SagaUtils.DelayedHeader($"[{order.StreamId}] Adding bread - 5.00");
+         var item1Added = orders.Execute(order, addItem1);
+         await bus.Pipe(item1Added);
 
-         order = orders.Apply(order, evnAdded1);
-         var evnAdded2 = orders.AddItem(order, "Bread", 5.0m);
-         await bus.Pipe(evnAdded2);
+         //Command 2: Add second item
+         var addItem2 = new AddItemCommand
+         {
+            CorrelationId = SagaUtils.GenerateCorrelationId(),
+            TimeStamp = SagaUtils.GenerateTimeStamp(),
 
-         await SagaUtils.DelayedHeader($"[{order.StreamId}] Checkout");
+            Description = "Bread",
+            Cost = 5.0m
+         };
+         Console.WriteLine($"[{addItem2.CorrelationId}/{order.StreamId}] Adding bread - 5.00");
 
-         order = orders.Apply(order, evnAdded2);
-         await bus.Pipe(orders.Checkout(order));
+         order = orders.Apply(order, item1Added);
+         var item2Added = orders.Execute(order, addItem2);
+         await bus.Pipe(item2Added);
+
+         //Command 3: Checkout
+         await SagaUtils.WaitSomeTime();
+         var checkoutCommand = new CheckoutCommand
+         {
+            CorrelationId = SagaUtils.GenerateCorrelationId(),
+            TimeStamp = SagaUtils.GenerateTimeStamp()
+         };
+         Console.WriteLine($"[{checkoutCommand.CorrelationId}/{order.StreamId}] Checkout");
+
+         order = orders.Apply(order, item2Added);
+         await bus.Pipe(orders.Execute(order, checkoutCommand));
       }
    }
 }

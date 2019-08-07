@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Domain;
 
 namespace Runner
@@ -24,31 +25,48 @@ namespace Runner
       private async Task OnCheckedEvent(CheckedEvent evn)
       {
          var order = await this.persistence.GetState(evn.StreamId, new OrdersAggregate());
-         await PayOrder(order);
+         await PayOrder(order, evn);
       }
 
       private async Task OnPaidEvent(PaidEvent evn)
       {
          var order = await this.persistence.GetState(evn.OrderStreamId, new OrdersAggregate());
-         await SendOrder(evn, order);
+         await SendOrder(order, evn);
       }
 
-      private async Task PayOrder(OrderState order)
+      private async Task PayOrder(OrderState order, CheckedEvent evn)
       {
          var payment = new PaymentAggregate();
          var state = payment.Zero(SagaUtils.GeneratePaymentId());
 
-         await SagaUtils.DelayedHeader($"[{order.StreamId}] Payment [{state.StreamId}]");
-         await this.bus.Pipe(payment.Pay(state, order.StreamId, order.TotalCost));
+         await SagaUtils.WaitSomeTime();
+         Console.WriteLine($"[{evn.CorrelationId}/{order.StreamId}] Payment [{state.StreamId}]");
+         await this.bus.Pipe(payment.Execute(state, new PayCommand
+         {
+            CorrelationId = evn.CorrelationId,
+            TimeStamp = SagaUtils.GenerateTimeStamp(),
+
+            OrderStreamId = order.StreamId,
+            Amount = order.TotalCost
+         }));
       }
 
-      private async Task SendOrder(PaidEvent paid, OrderState order)
+      private async Task SendOrder(OrderState order, PaidEvent evn)
       {
          var delivery = new DeliveryAggregate();
          var state = delivery.Zero(SagaUtils.GenerateDeliveryId());
 
-         await SagaUtils.DelayedHeader($"[{order.StreamId}] Delivery [{state.StreamId}]");
-         await this.bus.Pipe(delivery.Send(state, paid.StreamId, order.StreamId, order.Items));
+         await SagaUtils.WaitSomeTime();
+         Console.WriteLine($"[{evn.CorrelationId}/{order.StreamId}] Delivery [{state.StreamId}]");
+         await this.bus.Pipe(delivery.Send(state, new SendCommand
+         {
+            CorrelationId = evn.CorrelationId,
+            TimeStamp = SagaUtils.GenerateTimeStamp(),
+
+            PaymentStreamId = evn.StreamId,
+            OrderStreamId = order.StreamId,
+            Items = order.Items
+          }));
       }
    }
 }
