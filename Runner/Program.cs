@@ -59,24 +59,23 @@ namespace Runner
                            "\n T - set tasks delay");
       }
 
-      private static void RunSagaManager()
+      private static async void RunSagaManager()
       {
-         var buyingSagaCfg = new SagaConfiguration();
-         buyingSagaCfg.AddAction("order", "CheckedEvent", new BuyingSagaAction());
-         buyingSagaCfg.AddAction("payment", "PaidEvent", new BuyingSagaAction());
-         buyingSagaCfg.AddEndAction("delivery","SendEvent");
+         var selling = new SagaConfiguration();
+         selling.AddAction("order", "CheckedEvent", new BuyingSagaAction());
+         selling.AddAction("payment", "PaidEvent", new BuyingSagaAction());
+         selling.AddEndAction("delivery","SendEvent");
 
-         new ServiceSimulator<SagaManager>(() => new SagaManager(buyingSagaCfg))
-            .Start();
+         await new ServiceSimulator<Saga>(() => new Saga(selling)).Start();
       }
 
-      private static void RunScenario()
+      private static async void RunScenario()
       {
          Console.WriteLine("How many user scenarios should be run ?");
          if (int.TryParse(Console.ReadLine(), out var howMany) && howMany > 0)
          {
             Console.WriteLine($"Running {howMany} user scenarios.");
-            UserScenario.RunRange(howMany);
+            await UserScenario.RunRange(howMany);
          }
       }
 

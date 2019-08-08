@@ -34,8 +34,21 @@ namespace Runner
             if (this.onNetwork || onTime)
             {
                PrintStatusMessages();
-               await this.serviceTask.Run();
+               await RunTask();
             }
+         }
+      }
+
+      private async Task RunTask()
+      {
+         try
+         {
+            await this.serviceTask.Run();
+         }
+         catch (Exception e)
+         {
+            Console.WriteLine(e);
+            throw;
          }
       }
 
