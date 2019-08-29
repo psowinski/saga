@@ -60,7 +60,7 @@ namespace Runner
 
          //Command 3: Checkout
          await SagaUtils.WaitSomeTime();
-         var checkoutCommand = new CheckoutCommand
+         var checkoutCommand = new CheckOutCommand
          {
             CorrelationId = SagaUtils.GenerateCorrelationId(),
             TimeStamp = SagaUtils.GenerateTimeStamp()

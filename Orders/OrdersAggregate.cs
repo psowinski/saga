@@ -11,7 +11,7 @@ namespace Domain
       public decimal Cost;
    }
 
-   public class CheckoutCommand : Command
+   public class CheckOutCommand : Command
    {
    }
 
@@ -23,7 +23,7 @@ namespace Domain
    }
 
    [DisplayName("CheckedEvent")]
-   public class CheckedEvent : Event
+   public class CheckedOutEvent : Event
    {
    }
 
@@ -31,7 +31,7 @@ namespace Domain
    {
       public List<string> Items = new List<string>();
       public decimal TotalCost = 0.0m;
-      public bool Checked = false;
+      public bool CheckedOut = false;
    }
 
    public class OrdersAggregate : IAggregate<OrderState>
@@ -50,7 +50,7 @@ namespace Domain
          {
             case AddItemCommand addItem:
                return AddItem(state, addItem);
-            case CheckoutCommand checkout:
+            case CheckOutCommand checkout:
                return Checkout(state, checkout);
             default:
                throw new NotImplementedException(nameof(command));
@@ -72,9 +72,9 @@ namespace Domain
          };
       }
 
-      private CheckedEvent Checkout(OrderState state, CheckoutCommand command)
+      private CheckedOutEvent Checkout(OrderState state, CheckOutCommand command)
       {
-         return new CheckedEvent
+         return new CheckedOutEvent
          {
             CorrelationId = command.CorrelationId,
             TimeStamp = command.TimeStamp,
@@ -92,7 +92,7 @@ namespace Domain
          switch (evn)
          {
             case ItemAddedEvent itemAdded:
-               if (state.Checked) throw new ArgumentException(nameof(state));
+               if (state.CheckedOut) throw new ArgumentException(nameof(state));
                return new OrderState
                {
                   StreamId = evn.StreamId,
@@ -100,14 +100,14 @@ namespace Domain
                   Items = state.Items.Append(itemAdded.Description).ToList(),
                   TotalCost = state.TotalCost + itemAdded.Cost
                };
-            case CheckedEvent checkedEvn:
+            case CheckedOutEvent checkedOutEvent:
                return new OrderState
                {
                   StreamId = evn.StreamId,
                   Version = evn.Version,
                   Items = state.Items.ToList(),
                   TotalCost = state.TotalCost,
-                  Checked = true
+                  CheckedOut = true
                };
          }
          throw new Exception(nameof(evn));

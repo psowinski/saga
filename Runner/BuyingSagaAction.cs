@@ -13,7 +13,7 @@ namespace Runner
       {
          switch (evn)
          {
-            case CheckedEvent checkedEvn:
+            case CheckedOutEvent checkedEvn:
                await OnCheckedEvent(checkedEvn);
                break;
             case PaidEvent paid:
@@ -22,7 +22,7 @@ namespace Runner
          }
       }
 
-      private async Task OnCheckedEvent(CheckedEvent evn)
+      private async Task OnCheckedEvent(CheckedOutEvent evn)
       {
          var order = await this.persistence.GetState(evn.StreamId, new OrdersAggregate());
          await PayOrder(order, evn);
@@ -34,7 +34,7 @@ namespace Runner
          await SendOrder(order, evn);
       }
 
-      private async Task PayOrder(OrderState order, CheckedEvent evn)
+      private async Task PayOrder(OrderState order, CheckedOutEvent evn)
       {
          var payment = new PaymentAggregate();
          var state = payment.Zero(SagaUtils.GeneratePaymentId());
