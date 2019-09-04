@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Runner
+namespace Infrastructure
 {
    public class NetworkDriver
    {
@@ -8,7 +8,7 @@ namespace Runner
       private readonly Random rnd = new Random();
       private bool message;
 
-      public void SendLowValueMessage()
+      public void SendSagaWakeup()
       {
          lock (this.dataLock)
          {
@@ -18,7 +18,7 @@ namespace Runner
 
       public int LostMessageProbability = 50;
 
-      public bool ReceiveLowValueMessage()
+      public bool ReceiveSagaWakeup()
       {
          lock (this.dataLock)
          {

@@ -1,22 +1,24 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace Runner
+namespace Infrastructure.Service
 {
    public class ServiceSimulator<T>
    {
-      private readonly Func<IServiceTask> serviceFactory;
+      private readonly Func<ITask> taskFactory;
+      private readonly string name;
       private readonly Network network = new Network();
       private readonly Random rnd = new Random();
 
-      private IServiceTask serviceTask;
+      private ITask serviceTask;
       private bool restoredAfterCrash;
       private bool onNetwork;
 
-      public ServiceSimulator(Func<IServiceTask> serviceFactory)
+      public ServiceSimulator(Func<ITask> taskFactory, string name)
       {
-         this.serviceFactory = serviceFactory;
-         this.serviceTask = serviceFactory();
+         this.taskFactory = taskFactory;
+         this.name = name;
+         this.serviceTask = taskFactory();
       }
 
       public async Task Start()
@@ -28,7 +30,7 @@ namespace Runner
 
             await CrashAndRestartService();
 
-            this.onNetwork = this.network.ReceiveLowValueMessage();
+            this.onNetwork = this.network.ReceiveSagaWakeup();
             var onTime = ++idx % 5 == 0;
 
             if (this.onNetwork || onTime)
@@ -64,7 +66,7 @@ namespace Runner
       private async Task SimulateCrashAndRestart()
       {
          await Task.Delay(2000);
-         this.serviceTask = this.serviceFactory();
+         this.serviceTask = this.taskFactory();
          this.restoredAfterCrash = true;
       }
 
@@ -73,12 +75,12 @@ namespace Runner
          if (this.restoredAfterCrash)
          {
             this.restoredAfterCrash = false;
-            Console.WriteLine("-= Saga Manager restored after crash =-");
+            Console.WriteLine($"-= Service '{this.name}' restored after crash =-");
          }
          else
          {
             var why = this.onNetwork ? "network" : "timer";
-            Console.WriteLine($"Saga Manager was awakened by a [{why}].");
+            Console.WriteLine($"Service '{this.name}' was awakened by a [{why}].");
          }
       }
    }

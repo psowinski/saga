@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Domain;
+using Infrastructure;
+using Infrastructure.Service;
 
-namespace Runner
+namespace Sagas.Common
 {
    public class IndexEventPerCategory
    {
@@ -18,7 +20,7 @@ namespace Runner
       public ByCategoryIndexEvent Event;
    }
 
-   public class Saga : IServiceTask
+   public class Saga : ITask
    {
       private readonly Persistence persistence= new Persistence();
       private readonly SagaConfiguration configuration;

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Domain;
+using Domain.Orders;
+using Infrastructure;
+using Sagas.Common;
 
 namespace Runner
 {
@@ -25,50 +27,39 @@ namespace Runner
          var rnd = new Random();
 
          var bus = new Bus();
-         var orders = new OrdersAggregate();
-         var order = orders.Zero(SagaUtils.GenerateOrderId());
+         var order = new OrderState(NamesGenerator.NewOrderId());
 
          //Command 1: Add first item
-         await SagaUtils.WaitSomeTime();
-         var addItem1 = new AddItemCommand
+         await Delayer.WaitSomeTime();
+         var addMilk = new AddItemCommand(NamesGenerator.GenerateCorrelationId(), DateTime.Now)
          {
-            CorrelationId = SagaUtils.GenerateCorrelationId(),
-            TimeStamp = SagaUtils.GenerateTimeStamp(),
-
             Description = "Milk",
             Cost = 3.0m
          };
-         Console.WriteLine($"[{addItem1.CorrelationId}/{order.StreamId}] Adding milk - 3.00");
+         Console.WriteLine($"[{addMilk.CorrelationId}/{order.StreamId}] Adding milk - 3.00");
 
-         var item1Added = orders.Execute(order, addItem1);
-         await bus.Pipe(item1Added);
+         var milkAdded = addMilk.Execute(order);
+         await bus.Pipe(milkAdded);
 
          //Command 2: Add second item
-         var addItem2 = new AddItemCommand
+         var addBread = new AddItemCommand(NamesGenerator.GenerateCorrelationId(), DateTime.Now)
          {
-            CorrelationId = SagaUtils.GenerateCorrelationId(),
-            TimeStamp = SagaUtils.GenerateTimeStamp(),
-
             Description = "Bread",
             Cost = 5.0m
          };
-         Console.WriteLine($"[{addItem2.CorrelationId}/{order.StreamId}] Adding bread - 5.00");
+         Console.WriteLine($"[{addBread.CorrelationId}/{order.StreamId}] Adding bread - 5.00");
 
-         order = orders.Apply(order, item1Added);
-         var item2Added = orders.Execute(order, addItem2);
-         await bus.Pipe(item2Added);
+         order.Apply(milkAdded);
+         var breadAdded = addBread.Execute(order);
+         await bus.Pipe(breadAdded);
 
          //Command 3: Checkout
-         await SagaUtils.WaitSomeTime();
-         var checkoutCommand = new CheckOutCommand
-         {
-            CorrelationId = SagaUtils.GenerateCorrelationId(),
-            TimeStamp = SagaUtils.GenerateTimeStamp()
-         };
-         Console.WriteLine($"[{checkoutCommand.CorrelationId}/{order.StreamId}] Checkout");
+         await Delayer.WaitSomeTime();
+         var checkOut = new CheckOutCommand(NamesGenerator.GenerateCorrelationId(), DateTime.Now);
+         Console.WriteLine($"[{checkOut.CorrelationId}/{order.StreamId}] Checkout");
 
-         order = orders.Apply(order, item2Added);
-         await bus.Pipe(orders.Execute(order, checkoutCommand));
+         order.Apply(breadAdded);
+         await bus.Pipe(checkOut.Execute(order));
       }
    }
 }

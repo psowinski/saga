@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Domain.Common;
-using Infrastructure;
 
-namespace Runner
+namespace Infrastructure
 {
    public class Bus
    {

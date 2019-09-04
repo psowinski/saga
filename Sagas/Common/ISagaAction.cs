@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
-using Domain;
+using Domain.Common;
 
-namespace Runner
+namespace Sagas.Common
 {
    public interface ISagaAction
    {

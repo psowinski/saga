@@ -1,8 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
+using Infrastructure;
+using Infrastructure.Service;
+using Sagas.Buying;
+using Sagas.Common;
 
 namespace Runner
 {
@@ -66,7 +67,7 @@ namespace Runner
          selling.AddAction("payment", "PaidEvent", new BuyingSagaAction());
          selling.AddEndAction("delivery","SendEvent");
 
-         await new ServiceSimulator<Saga>(() => new Saga(selling)).Start();
+         await new ServiceSimulator<Saga>(() => new Saga(selling), "Buying Saga").Start();
       }
 
       private static async void RunScenario()
@@ -93,8 +94,8 @@ namespace Runner
          else if (range.Length == 1)
             int.TryParse(range[0], out max);
 
-         SagaUtils.MinTaskDelay = min * 1000;
-         SagaUtils.MaxTaskDelay = max * 1000;
+         Delayer.MinTaskDelay = min * 1000;
+         Delayer.MaxTaskDelay = max * 1000;
       }
    }
 }

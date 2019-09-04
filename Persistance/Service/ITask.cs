@@ -1,8 +1,8 @@
 ﻿using System.Threading.Tasks;
 
-namespace Runner
+namespace Infrastructure.Service
 {
-   public interface IServiceTask
+   public interface ITask
    {
       Task Run();
    }

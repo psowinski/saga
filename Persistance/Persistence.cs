@@ -1,11 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Domain;
+using Domain.Common;
 using Newtonsoft.Json;
-using Infrastructure;
 
-namespace Runner
+namespace Infrastructure
 {
    public class Persistence
    {
@@ -19,7 +19,7 @@ namespace Runner
          this.settings = new JsonSerializerSettings
          {
             TypeNameHandling = TypeNameHandling.Objects,
-            SerializationBinder = new DisplayNameSerializationBinder()
+            SerializationBinder = new EventsSerializationBinder()
          };
       }
 
@@ -52,12 +52,12 @@ namespace Runner
 
       public async Task<int> GetLastStreamVersion(string streamId) => await Db.FindLastVersion(streamId);
 
-      public async Task<T> GetState<T>(string streamId, IAggregate<T> aggregate)
+      public async Task<T> GetState<T>(string streamId) where T : State
       {
-         var zero = aggregate.Zero(streamId);
+         var zero = (T)Activator.CreateInstance(typeof(T), streamId);
          var events = await Load(streamId);
-
-         return events.Aggregate(zero, aggregate.Apply);
+         events.ForEach(zero.Apply);
+         return zero;
       }
    }
 }
