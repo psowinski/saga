@@ -1,12 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Domain.Common;
+using Domain.Orders;
 
-namespace Domain.Delivery
+namespace Domain.Dispatch
 {
-   public class SendEvent : Event
+   public class OrderDispatched : SagaEvent<Dispatch>
    {
-      public SendEvent(DeliveryState state, SendCommand command) : base(state, command)
+      public OrderDispatched()
+      {
+      }
+
+      public OrderDispatched(Dispatch state, DispatchOrder command) : base(state, command)
       {
          PaymentStreamId = command.PaymentStreamId;
          OrderStreamId = command.OrderStreamId;

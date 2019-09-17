@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Infrastructure
 {
@@ -15,92 +16,97 @@ namespace Infrastructure
          Culture = CultureInfo.InvariantCulture
       };
 
-
       private readonly object dataLock = new object();
-      private readonly List<dynamic> data = new List<dynamic>();
+      private readonly List<JToken> data = new List<JToken>();
+
       public Task Save(string json)
       {
+         var evn = JToken.Parse(json);
          lock (dataLock)
          {
-            var evn = DeserializeEvent(json);
-
-            UniqueIndex(evn);
+            ValidateEvent(evn);
             StoreEvent(evn);
-            CategoryIndex(evn);
+            AddByCategoryIndex(evn);
             return Task.CompletedTask;
          }
       }
 
-      private dynamic DeserializeEvent(string json)
+      private void ValidateEvent(JToken evn)
       {
-         var evn = JsonConvert.DeserializeObject<dynamic>(json, this.settings);
-         return evn;
+         var streamId = evn["streamId"].Value<string>();
+         var version = evn["version"].Value<int>();
+         ValidateStreamId(streamId);
+         ValidateVersion(streamId, version);
       }
 
       private void StoreEvent(dynamic evn)
+         => this.data.Add(evn);
+
+      private void ValidateStreamId(string streamId)
       {
-         this.data.Add(evn);
+         if (string.IsNullOrEmpty(streamId) || !streamId.Contains('-'))
+            throw new Exception("Invalid stream id");
+      }
+      private void ValidateVersion(string streamId, int version)
+      {
+         if (LastVersion(streamId) + 1 != version)
+            throw new Exception("Invalid version");
       }
 
-      private void UniqueIndex(dynamic evn)
+      private void AddByCategoryIndex(JToken evn)
       {
-         (string streamId, int version) = (evn.StreamId, evn.Version);
-         if (this.data.Any(x => x.StreamId == streamId && x.Version == version))
-            throw new Exception("Version is not unique");
+         var indexStreamId = ExtractByCategoryIndexStreamId(evn);
+         var indexVersion = LastVersion(indexStreamId) + 1;
+         var indexEvent = CreateByCategoryIndexEvent(indexStreamId, indexVersion, evn);
+         this.data.Add(indexEvent);
       }
 
-      private void CategoryIndex(dynamic evn)
+      private static string ExtractByCategoryIndexStreamId(JToken evn)
       {
-         string eventStreamId = evn.StreamId;
-         var streamId = "ByCategoryIndex-" + eventStreamId.Substring(0, eventStreamId.IndexOf('-'));
-         var version = LastVersion(streamId) + 1;
-
-         this.data.Add(CreateCategoryIndexEvent(streamId, version, evn));
+         var eventStreamId = evn["streamId"].Value<string>();
+         var indexStreamId = "byCategoryIndex-" + eventStreamId.Remove(eventStreamId.IndexOf('-'));
+         return indexStreamId;
       }
 
-      private dynamic CreateCategoryIndexEvent(string streamId, int version, dynamic evn)
-      {
-         return DeserializeEvent("{" +
-                                     "'$type': 'ByCategoryIndex'," +
-                                    $"'StreamId': '{streamId}'," +
-                                    $"'Version': {version}," +
-                                    $"'RefStreamId': '{(string)evn.StreamId}'," +
-                                    $"'RefVersion': {(int)evn.Version}," +
-                                    $"'RefType': '{(string)evn["$type"]}'," +
-                                    $"'RefCorrelationId': '{(string)evn.CorrelationId}'," +
-                                    $"'RefTimeStamp': '{evn.TimeStamp.ToString("o", CultureInfo.InvariantCulture)}'" +
-                                 "}");
-      }
+      private JObject CreateByCategoryIndexEvent(string streamId, int version, JToken evn)
+         => new JObject(
+            new JProperty("type", "Indexed"),
+            new JProperty("streamId", streamId),
+            new JProperty("version", version),
+            new JProperty("refStreamId", evn["streamId"]),
+            new JProperty("refVersion", evn["version"]),
+            new JProperty("refType", evn["type"]),
+            new JProperty("refCorrelationId", evn["correlationId"]),
+            new JProperty("refTimeStamp", evn["timeStamp"]));
 
       private int LastVersion(string streamId)
-      {
-         return this.data.Where(x => x.StreamId == streamId)
-                 .Select(x => (int)x.Version)
-                 .DefaultIfEmpty(0)
-                 .Max();
-      }
+         => this.data.Where(x => x["streamId"].Value<string>() == streamId)
+            .Select(x => x["version"].Value<int>())
+            .DefaultIfEmpty(0)
+            .Max();
 
       public Task<string> Load(string streamId, int fromVersion, int toVersion)
       {
+         var events = this.data.Where(
+            x => x["streamId"].Value<string>() == streamId
+                 && x["version"].Value<int>() >= fromVersion
+                 && (toVersion <= 0 || x["version"].Value<int>() <= toVersion));
+
          lock (dataLock)
          {
-            var events = this.data.Where(
-               x => x.StreamId == streamId 
-                    && x.Version >= fromVersion
-                    && (toVersion <= 0 || x.Version <= toVersion));
-
             var json = JsonConvert.SerializeObject(events, settings);
             return Task.FromResult(json);
          }
       }
 
-      public Task<int> FindLastVersion(string streamId)
-      {
-         lock (dataLock)
-         {
-            return Task.FromResult(LastVersion(streamId));
-         }
-      }
+      //Deprecated
+      //public Task<int> FindLastVersion(string streamId)
+      //{
+      //   lock (dataLock)
+      //   {
+      //      return Task.FromResult(LastVersion(streamId));
+      //   }
+      //}
 
       public string Dump()
       {

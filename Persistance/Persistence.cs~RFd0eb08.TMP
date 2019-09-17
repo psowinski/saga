@@ -51,6 +51,8 @@ namespace Infrastructure
 
       public string GetCategoryIndexStreamId(string category) => "byCategoryIndex-" + category;
 
+      //public async Task<int> GetLastStreamVersion(string streamId) => await Db.FindLastVersion(streamId);
+
       public async Task<T> GetState<T>(string streamId) where T : State
       {
          var zero = (T)Activator.CreateInstance(typeof(T), streamId);

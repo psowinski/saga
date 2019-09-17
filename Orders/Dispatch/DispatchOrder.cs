@@ -4,11 +4,11 @@ using System.IO;
 using System.Linq;
 using Domain.Common;
 
-namespace Domain.Delivery
+namespace Domain.Dispatch
 {
-   public class SendCommand : Command
+   public class DispatchOrder : Command
    {
-      public SendCommand(string correlationId, DateTime timeStamp) : base(correlationId, timeStamp)
+      public DispatchOrder(string correlationId, DateTime timeStamp) : base(correlationId, timeStamp)
       {
       }
 
@@ -23,10 +23,10 @@ namespace Domain.Delivery
          if (!Items.Any()) throw new InvalidDataException(nameof(Items));
       }
 
-      public SendEvent Execute(DeliveryState state)
+      public OrderDispatched Execute(Dispatch state)
       {
          Validate();
-         return new SendEvent(state, this);
+         return new OrderDispatched(state, this);
       }
    }
 }

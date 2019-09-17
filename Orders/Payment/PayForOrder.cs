@@ -4,9 +4,9 @@ using Domain.Common;
 
 namespace Domain.Payment
 {
-   public class PayCommand : Command
+   public class PayForOrder : Command
    {
-      public PayCommand(string correlationId, DateTime timeStamp) : base(correlationId, timeStamp)
+      public PayForOrder(string correlationId, DateTime timeStamp) : base(correlationId, timeStamp)
       {
       }
 
@@ -16,13 +16,13 @@ namespace Domain.Payment
       private void Validate()
       {
          if (string.IsNullOrWhiteSpace(OrderStreamId)) throw new InvalidDataException(nameof(OrderStreamId));
-         if (Amount >= 0) throw new InvalidDataException(nameof(Amount));
+         if (Amount <= 0) throw new InvalidDataException(nameof(Amount));
       }
 
-      public PaidEvent Execute(PaymentState state)
+      public OrderPaid Execute(Payment state)
       {
          Validate();
-         return new PaidEvent(state, this);
+         return new OrderPaid(state, this);
       }
    }
 }

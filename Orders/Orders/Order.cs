@@ -4,9 +4,9 @@ using Domain.Common;
 
 namespace Domain.Orders
 {
-   public class OrderState : State
+   public class Order : State
    {
-      public OrderState(string streamId) : base(streamId)
+      public Order(string streamId) : base(streamId)
       {
       }
 
@@ -15,14 +15,14 @@ namespace Domain.Orders
       public decimal TotalCost { get; private set; }
       public bool CheckedOut { get; private set; }
 
-      public void Apply(ItemAddedEvent evn)
+      public void Apply(OrderItemAdded evn)
       {
          base.ApplyVersion(evn);
          this.items.Add(evn.Description);
          TotalCost += evn.Cost;
       }
 
-      public void Apply(CheckedOutEvent evn)
+      public void Apply(OrderCheckedOut evn)
       {
          base.ApplyVersion(evn);
          CheckedOut = true;
@@ -32,8 +32,8 @@ namespace Domain.Orders
       {
          switch (evn)
          {
-            case ItemAddedEvent x: Apply(x); break;
-            case CheckedOutEvent x: Apply(x); break;
+            case OrderItemAdded x: Apply(x); break;
+            case OrderCheckedOut x: Apply(x); break;
             default: throw new InvalidEnumArgumentException(nameof(evn));
          }
       }

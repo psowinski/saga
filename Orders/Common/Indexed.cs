@@ -1,11 +1,14 @@
 ﻿using System;
-using Domain.Common;
 
-namespace Domain
+namespace Domain.Common
 {
-   public class ByCategoryIndexEvent : Event
+   public class Indexed : Event
    {
-      public ByCategoryIndexEvent(State state, Command command) : base(state, command)
+      public Indexed()
+      {
+      }
+
+      public Indexed(State state, Command command) : base(state, command)
       {
       }
 

@@ -1,5 +1,9 @@
 ﻿using System;
 using System.IO;
+using Domain.Common;
+using Domain.Dispatch;
+using Domain.Orders;
+using Domain.Payment;
 using Infrastructure;
 using Infrastructure.Service;
 using Sagas.Buying;
@@ -11,7 +15,7 @@ namespace Runner
    {
       static void Main(string[] args)
       {
-         RunSagaManager();
+         RunSagas(true);
          RunApp();
       }
 
@@ -60,14 +64,31 @@ namespace Runner
                            "\n T - set tasks delay");
       }
 
-      private static async void RunSagaManager()
+      private static void RunSagas(bool parallel)
       {
-         var selling = new SagaConfiguration();
-         selling.AddAction("order", "CheckedEvent", new BuyingSagaAction());
-         selling.AddAction("payment", "PaidEvent", new BuyingSagaAction());
-         selling.AddEndAction("delivery","SendEvent");
+         if (parallel)
+         {
+            var paying = new SagaConfiguration()
+               .AddAction<Order, OrderCheckedOut>(new PaySagaAction())
+               .AddEndAction<Payment, OrderPaid>();
 
-         await new ServiceSimulator<Saga>(() => new Saga(selling), "Buying Saga").Start();
+            new ServiceSimulator<Saga>(() => new Saga(paying), "Paying Saga").Start();
+
+            var dispatching = new SagaConfiguration()
+               .AddAction<Payment, OrderPaid>(new DispatchSagaAction())
+               .AddEndAction<Dispatch, OrderDispatched>();
+
+            new ServiceSimulator<Saga>(() => new Saga(dispatching), "Dispatching Saga").Start();
+         }
+         else
+         {
+            var buying = new SagaConfiguration()
+               .AddAction<Order, OrderCheckedOut>(new PaySagaAction())
+               .AddAction<Payment, OrderPaid>(new DispatchSagaAction())
+               .AddEndAction<Dispatch, OrderDispatched>();
+
+            new ServiceSimulator<Saga>(() => new Saga(buying), "Buying Saga").Start();
+         }
       }
 
       private static async void RunScenario()

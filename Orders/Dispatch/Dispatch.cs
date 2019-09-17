@@ -2,11 +2,11 @@
 using System.ComponentModel;
 using Domain.Common;
 
-namespace Domain.Delivery
+namespace Domain.Dispatch
 {
-   public class DeliveryState : State
+   public class Dispatch : State
    {
-      public DeliveryState(string streamId) : base(streamId)
+      public Dispatch(string streamId) : base(streamId)
       {
       }
 
@@ -15,7 +15,7 @@ namespace Domain.Delivery
       private readonly List<string> items = new List<string>();
       public IReadOnlyList<string> Items => this.items;
 
-      public void Apply(SendEvent evn)
+      public void Apply(OrderDispatched evn)
       {
          base.ApplyVersion(evn);
 
@@ -28,7 +28,7 @@ namespace Domain.Delivery
       {
          switch (evn)
          {
-            case SendEvent x: Apply(x); break;
+            case OrderDispatched x: Apply(x); break;
             default: throw new InvalidEnumArgumentException(nameof(evn));
          }
       }

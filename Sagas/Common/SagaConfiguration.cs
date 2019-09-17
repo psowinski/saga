@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Sagas.Common
@@ -7,40 +8,42 @@ namespace Sagas.Common
    {
       private readonly Dictionary<string, Dictionary<string, ISagaAction>> register = new Dictionary<string, Dictionary<string, ISagaAction>>();
 
-      private Dictionary<string, ISagaAction> GetCategoryActions(string category)
-         => this.register.TryGetValue(category, out var actions) ? actions : null;
-
-      private void AddCategoryActions(string category)
-         => this.register[category] = new Dictionary<string, ISagaAction>();
-
       private Dictionary<string, ISagaAction> UpsertCategoryActions(string category)
       {
-         if(GetCategoryActions(category) == null) AddCategoryActions(category);
-         return GetCategoryActions(category);
+         if (this.register.TryGetValue(category, out var actions)) return actions;
+         actions = new Dictionary<string, ISagaAction>();
+         this.register[category] = actions;
+         return actions;
       }
 
-      public void AddAction(string category, string eventType, ISagaAction action)
+      public SagaConfiguration AddAction<Category, Event>(ISagaAction action)
       {
-         var categoryActions = UpsertCategoryActions(category);
-         categoryActions[eventType] = action;
+         if (action == null) throw new ArgumentNullException(nameof(action));
+         var categoryActions = UpsertCategoryActions(typeof(Category).Name.ToLower());
+         categoryActions[typeof(Event).Name] = action;
+
+         return this;
       }
 
-      public void AddEndAction(string category, string eventType)
+      public SagaConfiguration AddEndAction<Category, Event>()
       {
-         var categoryActions = UpsertCategoryActions(category);
-         categoryActions[eventType] = null;
+         var categoryActions = UpsertCategoryActions(typeof(Category).Name.ToLower());
+         categoryActions[typeof(Event).Name] = null;
+
+         return this;
       }
 
-      public ISagaAction GetSagaAction(string category, string eventType)
+      public Optional<ISagaAction> GetSagaAction(string category, string eventType)
       {
-         var categoryActions = GetCategoryActions(category);
-         if (categoryActions != null && categoryActions.TryGetValue(eventType, out var action))
-            return action;
-         return null;
+         if (this.register.TryGetValue(category, out var categoryActions)
+            && categoryActions.TryGetValue(eventType, out var action) && action != null)
+            return new Some<ISagaAction>(action);
+         return new None<ISagaAction>();
       }
 
       public bool IsKnownEventType(string category, string eventType)
-         => GetCategoryActions(category)?.ContainsKey(eventType) ?? false;
+         => this.register.TryGetValue(category, out var categoryActions)
+            && categoryActions != null && categoryActions.ContainsKey(eventType);
 
       public IEnumerable<string> Categories => register.Select(x => x.Key);
    }

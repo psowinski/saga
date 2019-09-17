@@ -27,11 +27,11 @@ namespace Runner
          var rnd = new Random();
 
          var bus = new Bus();
-         var order = new OrderState(NamesGenerator.NewOrderId());
+         var order = new Order(StreamNumbering.NewStreamId<Order>());
 
          //Command 1: Add first item
          await Delayer.WaitSomeTime();
-         var addMilk = new AddItemCommand(NamesGenerator.GenerateCorrelationId(), DateTime.Now)
+         var addMilk = new AddOrderItem(StreamNumbering.NewCorrelationId(), DateTime.Now)
          {
             Description = "Milk",
             Cost = 3.0m
@@ -42,7 +42,8 @@ namespace Runner
          await bus.Pipe(milkAdded);
 
          //Command 2: Add second item
-         var addBread = new AddItemCommand(NamesGenerator.GenerateCorrelationId(), DateTime.Now)
+         await Delayer.WaitSomeTime();
+         var addBread = new AddOrderItem(StreamNumbering.NewCorrelationId(), DateTime.Now)
          {
             Description = "Bread",
             Cost = 5.0m
@@ -55,7 +56,7 @@ namespace Runner
 
          //Command 3: Checkout
          await Delayer.WaitSomeTime();
-         var checkOut = new CheckOutCommand(NamesGenerator.GenerateCorrelationId(), DateTime.Now);
+         var checkOut = new CheckOutOrder(StreamNumbering.NewCorrelationId(), DateTime.Now);
          Console.WriteLine($"[{checkOut.CorrelationId}/{order.StreamId}] Checkout");
 
          order.Apply(breadAdded);

@@ -10,10 +10,13 @@ namespace Infrastructure
       public static async Task WaitSomeTime()
       {
          if (MaxTaskDelay > MinTaskDelay && MinTaskDelay >= 0 && MaxTaskDelay > 0)
-            await Task.Delay((int) Rnd.Next(MinTaskDelay, MaxTaskDelay));
+         {
+            var timeSpan = Rnd.Next(MinTaskDelay, MaxTaskDelay);
+            await Task.Delay(timeSpan);
+         }
       }
 
       public static int MinTaskDelay = 1000;
-      public static int MaxTaskDelay = 2000;
+      public static int MaxTaskDelay = 5000;
    }
 }

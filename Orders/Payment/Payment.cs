@@ -3,16 +3,16 @@ using Domain.Common;
 
 namespace Domain.Payment
 {
-   public class PaymentState : State
+   public class Payment : State
    {
-      public PaymentState(string streamId) : base(streamId)
+      public Payment(string streamId) : base(streamId)
       {
       }
 
       public string OrderStreamId { get; private set; }
       public decimal Amount { get; private set; }
 
-      public void Apply(PaidEvent evn)
+      public void Apply(OrderPaid evn)
       {
          base.ApplyVersion(evn);
 
@@ -24,7 +24,7 @@ namespace Domain.Payment
       {
          switch (evn)
          {
-            case PaidEvent x: Apply(x); break;
+            case OrderPaid x: Apply(x); break;
             default: throw new InvalidEnumArgumentException(nameof(evn));
          }
       }
