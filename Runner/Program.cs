@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using Domain.Common;
 using Domain.Dispatch;
 using Domain.Orders;
 using Domain.Payment;
@@ -25,18 +24,22 @@ namespace Runner
          while (true)
          {
             var msg = Console.ReadKey();
+            Console.WriteLine();
             switch (msg.Key)
             {
                case ConsoleKey.Escape:
                   return;
                case ConsoleKey.D:
-                  Console.WriteLine(Persistence.Dump());
+                  //Console.WriteLine(Persistence.Dump());
                   break;
                case ConsoleKey.S:
                   DumpToFile();
                   break;
                case ConsoleKey.T:
                   SetTasksDelay();
+                  break;
+               case ConsoleKey.I:
+                  ToggleServiceInformation();
                   break;
                case ConsoleKey.R:
                   RunScenario();
@@ -48,10 +51,29 @@ namespace Runner
          }
       }
 
+      private static void ToggleServiceInformation()
+      {
+         Console.WriteLine("\n 1 - service reports" +
+                           "\n 2 - saga reports");
+         var msg = Console.ReadKey();
+         Console.WriteLine();
+         switch (msg.Key)
+         {
+            case ConsoleKey.D1:
+               Console.WriteLine((ServiceSimulatorConfig.ShowServiceReport ? "Disable" : "Enable") + " service reports.");
+               ServiceSimulatorConfig.ShowServiceReport ^= true;
+               break;
+            case ConsoleKey.D2:
+               Console.WriteLine((Saga.ShowSagaReports ? "Disable" : "Enable") + " saga reports.");
+               Saga.ShowSagaReports ^= true;
+               break;
+         }
+      }
+
       private static void DumpToFile()
       {
-         Console.WriteLine("Give file path");
-         File.WriteAllText(Console.ReadLine(), Persistence.Dump());
+         //Console.WriteLine("File path to dump data: ");
+         //File.WriteAllText(Console.ReadLine(), Persistence.Dump());
       }
 
       private static void PrintMenu()
@@ -61,7 +83,8 @@ namespace Runner
                            "\n R - run scenarios" +
                            "\n D - print database" +
                            "\n S - print database to file" +
-                           "\n T - set tasks delay");
+                           "\n T - set tasks delay" +
+                           "\n I - show reports");
       }
 
       private static void RunSagas(bool parallel)
@@ -69,23 +92,23 @@ namespace Runner
          if (parallel)
          {
             var paying = new SagaConfiguration()
-               .AddAction<Order, OrderCheckedOut>(new PaySagaAction())
-               .AddEndAction<Payment, OrderPaid>();
+               .AddAction<OrderCheckedOut>(new PaySagaAction())
+               .AddEndAction<OrderPaid>();
 
             new ServiceSimulator<Saga>(() => new Saga(paying), "Paying Saga").Start();
 
             var dispatching = new SagaConfiguration()
-               .AddAction<Payment, OrderPaid>(new DispatchSagaAction())
-               .AddEndAction<Dispatch, OrderDispatched>();
+               .AddAction<OrderPaid>(new DispatchSagaAction())
+               .AddEndAction<OrderDispatched>();
 
             new ServiceSimulator<Saga>(() => new Saga(dispatching), "Dispatching Saga").Start();
          }
          else
          {
             var buying = new SagaConfiguration()
-               .AddAction<Order, OrderCheckedOut>(new PaySagaAction())
-               .AddAction<Payment, OrderPaid>(new DispatchSagaAction())
-               .AddEndAction<Dispatch, OrderDispatched>();
+               .AddAction<OrderCheckedOut>(new PaySagaAction())
+               .AddAction<OrderPaid>(new DispatchSagaAction())
+               .AddEndAction<OrderDispatched>();
 
             new ServiceSimulator<Saga>(() => new Saga(buying), "Buying Saga").Start();
          }

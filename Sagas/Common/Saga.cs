@@ -31,71 +31,81 @@ namespace Sagas.Common
 
       public async Task Run()
       {
-         var (index, newState) = await LoadIndex();
-         await ContinueUnfinishedSagas(index);
-         UpdateState(newState);
+         var byCategoryIndexes = await LoadTrackedByCategoryIndexes();
+         await ContinueUnfinishedSagas(byCategoryIndexes.SelectMany(x => x));
+         PrintNewState(byCategoryIndexes);
+         UpdateState(byCategoryIndexes);
       }
 
-      private async Task<(IEnumerable<(string Category, Indexed Event)> Index,
-         IEnumerable<(string Category, int Version)> State)> LoadIndex()
+      private Task<List<Indexed>[]> LoadTrackedByCategoryIndexes() => Task.WhenAll(this.state.Select(LoadByCategoryIndex).ToList());
+
+      public string CategoryNameIndexStreamId(string streamId) =>
+         streamId.Substring(streamId.IndexOf('-') + 1);
+
+      private Task<List<Indexed>> LoadByCategoryIndex((string Category, int Version) x)
+         => this.persistence.Load<Indexed>(this.persistence.CreateCategoryIndexStreamId(x.Category), x.Version + 1);
+
+      public void UpdateState(List<Indexed>[] byCategoryIndexes)
       {
-         var categoryIndices = await Task.WhenAll(this.state.Select(LoadCategoryIndex).ToList());
-         var index = categoryIndices.SelectMany(x => x.Index);
-         var newState = categoryIndices.Select(x => (x.Category, Version: x.Index.Max(y => y.Event.Version)));
-         return (index, newState);
+         var updated = GetUpdatedState(byCategoryIndexes);
+         var missing = GetMissingState(updated);
+         this.state = updated.Union(missing).ToList();
       }
 
-      private async Task<(IEnumerable<(string Category, Indexed Event)> Index, string Category)> LoadCategoryIndex(
-         (string Category, int Version) x)
+      private IEnumerable<(string Category, int Version)> GetMissingState(IEnumerable<(string Category, int Version)> updated)
+         => this.state.Where(x => updated.All(y => y.Category != x.Category));
+
+      private List<(string Category, int Version)> GetUpdatedState(List<Indexed>[] byCategoryIndexes)
       {
-         var categoryIndexEvents = await LoadCategoryIndexEvents(x.Category, x.Version + 1);
-         return (categoryIndexEvents, x.Category);
+         var updated = byCategoryIndexes
+            .Where(x => x.Count > 0)
+            .Select(x => (Category: CategoryNameIndexStreamId(x.First().StreamId), Version: x.Max(y => y.Version)))
+            .ToList();
+         return updated;
       }
-
-      public void UpdateState(IEnumerable<(string category, int version)> newCategoryState) =>
-         this.state = newCategoryState.ToList();
-
-      public void PrintCategoryStatus(IEnumerable<(string category, int version)> newCategoryState)
+ 
+      public void PrintNewState(List<Indexed>[] byCategoryIndexes)
       {
-         foreach (var item in newCategoryState)
-            PrintCategoryStatus(item, this.state.Single(x => x.Category == item.category).Version);
-      }
-   
-      private void PrintCategoryStatus((string Category, int Version) categoryWithVersion, int prevVersion)
-      {
-         Console.WriteLine(
-            $"Processing {categoryWithVersion.Version - prevVersion} event(s) of category [{categoryWithVersion.Category}] (ver. {prevVersion + 1}-{categoryWithVersion.Version}).");
+         var updated = GetUpdatedState(byCategoryIndexes);
+         PrintUpdatedState(updated);
       }
 
-      private async Task<List<(string Category, Indexed Event)>> LoadCategoryIndexEvents(string category, int fromVersion)
+      public static bool ShowSagaReports = false;
+      private void PrintUpdatedState(IEnumerable<(string Category, int Version)> updated)
       {
-         var index = await this.persistence.Load<Indexed>(this.persistence.GetCategoryIndexStreamId(category), fromVersion);
-         return index.Select(x => (category, x)).ToList();
+         if (!ShowSagaReports) return;
+
+         foreach (var (category, version) in updated)
+         {
+            var prevVersion = this.state.First(x => x.Category == category).Version;
+            Console.WriteLine(
+               $"Processing {version - prevVersion} event(s) of category [{category}] (ver. {prevVersion + 1}-{version}).");
+         }
       }
 
-      private async Task ContinueUnfinishedSagas(IEnumerable<(string Category, Indexed Event)> events)
+      private async Task ContinueUnfinishedSagas(IEnumerable<Indexed> events)
       {
          var sagasContinuation = CreateSagasContinuation(events);
          await ContinueSagas(sagasContinuation);
       }
 
-      private IEnumerable<(Indexed Event, ISagaAction Action)> CreateSagasContinuation(IEnumerable<(string Category, Indexed Event)> index)
+      private IEnumerable<(Indexed Event, ISagaAction Action)> CreateSagasContinuation(IEnumerable<Indexed> index)
       {
          var eventsToProcess = index
             .Where(KeepSagaEvents)
-            .GroupBy(x => x.Event.RefCorrelationId)
-            .Select(g => g.OrderByDescending(e => e.Event.RefTimeStamp).First())
+            .GroupBy(x => x.RefCorrelationId)
+            .Select(g => g.OrderByDescending(e => e.RefTimeStamp).First())
             .Choose(BindActionToEvent);
          return eventsToProcess;
       }
 
-      private bool KeepSagaEvents((string Category, Indexed Event) x)
-         => this.configuration.IsKnownEventType(x.Category, x.Event.RefType);
+      private bool KeepSagaEvents(Indexed evn)
+         => this.configuration.IsKnownEventType(evn.RefType);
 
-      private Optional<(Indexed Event, ISagaAction Action)> BindActionToEvent((string Category, Indexed Event) arg)
+      private Optional<(Indexed Event, ISagaAction Action)> BindActionToEvent(Indexed evn)
          => this.configuration
-            .GetSagaAction(arg.Category, arg.Event.RefType)
-            .Map(x => (arg.Event, x));
+            .GetSagaAction(evn.RefType)
+            .Map(x => (evn, x));
 
       private Task ContinueSagas(IEnumerable<(Indexed Event, ISagaAction Action)> sagaTasks)
          => Task.WhenAll(sagaTasks.Select(x => ContinueSagaTask(x.Event, x.Action)).ToList());

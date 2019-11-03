@@ -25,6 +25,7 @@ namespace Sagas.Buying
       private async Task Dispatch(OrderPaid evn)
       {
          var state = new Dispatch(StreamNumbering.NewStreamId<Dispatch>());
+
          var order = await this.persistence.GetState<Order>(evn.OrderStreamId);
 
          //await Delayer.WaitSomeTime();

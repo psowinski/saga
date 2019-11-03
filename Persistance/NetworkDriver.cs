@@ -1,4 +1,5 @@
 ﻿using System;
+using Infrastructure.Service;
 
 namespace Infrastructure
 {
@@ -25,7 +26,8 @@ namespace Infrastructure
             if (!this.message) return false;
             this.message = false;
             var ret = rnd.Next(0, 99) < LostMessageProbability;
-            if(!ret) Console.WriteLine($"Network message lost. Network loose {LostMessageProbability}% of messages.");
+            if(!ret && ServiceSimulatorConfig.ShowServiceReport)
+               Console.WriteLine($"Network message lost. Network loose {LostMessageProbability}% of messages.");
             return ret;
          }
       }

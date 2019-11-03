@@ -3,6 +3,11 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Service
 {
+   public static class ServiceSimulatorConfig
+   {
+      public static bool ShowServiceReport = false;
+   }
+
    public class ServiceSimulator<T>
    {
       private readonly Func<ITask> taskFactory;
@@ -72,6 +77,8 @@ namespace Infrastructure.Service
 
       private void PrintStatusMessages()
       {
+         if (!ServiceSimulatorConfig.ShowServiceReport) return;
+
          if (this.restoredAfterCrash)
          {
             this.restoredAfterCrash = false;
