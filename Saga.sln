@@ -9,19 +9,24 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShoppingSaga", "ShoppingSag
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyStream", "MyStream\MyStream.csproj", "{175DF1FB-A2FE-4642-9F1B-F007581A2B83}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "WebApp\WebApp.csproj", "{C8F1F7FF-6A96-44DB-9D53-CA928D1C0D8A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApp", "WebApp\WebApp.csproj", "{C8F1F7FF-6A96-44DB-9D53-CA928D1C0D8A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App", "App\App.csproj", "{3E423056-B9EA-4847-8B5D-9414FEDB5C70}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "App", "App\App.csproj", "{3E423056-B9EA-4847-8B5D-9414FEDB5C70}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{3E84BDCD-3088-4D1F-A8E6-3861EAC27D0D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Common.csproj", "{3E84BDCD-3088-4D1F-A8E6-3861EAC27D0D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.Model", "Domain.Model\Domain.Model.csproj", "{8A70E333-ABED-4669-99F3-E510F0E67906}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.Model", "Domain.Model\Domain.Model.csproj", "{8A70E333-ABED-4669-99F3-E510F0E67906}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.BussinesLogic", "Domain.BussinesLogic\Domain.BussinesLogic.csproj", "{F8426463-31A5-4398-B774-EF71F894094C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.BussinesLogic", "Domain.BussinesLogic\Domain.BussinesLogic.csproj", "{F8426463-31A5-4398-B774-EF71F894094C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Persistence", "Persistence\Persistence.csproj", "{D157F1B4-96B6-434D-9B72-AD76EB180A3B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Persistence", "Persistence\Persistence.csproj", "{D157F1B4-96B6-434D-9B72-AD76EB180A3B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserScenarioApp", "UserScenarioApp\UserScenarioApp.csproj", "{B9BC444C-319A-4E5D-8D1F-2750560E6A6D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserScenarioApp", "UserScenarioApp\UserScenarioApp.csproj", "{B9BC444C-319A-4E5D-8D1F-2750560E6A6D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8FC93B41-85FA-47D7-B409-B6B5F5334CD6}"
+	ProjectSection(SolutionItems) = preProject
+		docker-compose.yml = docker-compose.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

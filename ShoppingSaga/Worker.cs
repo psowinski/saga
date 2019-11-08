@@ -10,6 +10,7 @@ using Saga;
 using Persistence;
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
 
 namespace ShoppingSaga
 {
@@ -32,22 +33,48 @@ namespace ShoppingSaga
          base.Dispose();
       }
 
-      public Worker(ILogger<Worker> logger, IConfiguration cfg)
+      public Worker(ILogger<Worker> logger, IConfiguration cfg, IHostEnvironment env)
       {
          this.logger = logger;
 
          var appUrl = cfg.GetValue<string>("AppUrl");
          var persistenceUrl = cfg.GetValue<string>("PersistenceUrl");
 
+         var isDev = env.IsDevelopment();
+
          this.appClient = new AppClient(appUrl);
          this.persistence = new PersistenceClient(persistenceUrl);
 
          var shopping = new SagaConfiguration()
-            .OnEvent<OrderCheckedOut>(evn => appClient.Pay(evn.StreamId, evn.CorrelationId))
-            .OnEvent<OrderPaid>(evn => appClient.Dispatch(evn.OrderStreamId, evn.StreamId, evn.CorrelationId))
+            .OnEvent(Protect((OrderCheckedOut evn) => appClient.Pay(evn.StreamId, evn.CorrelationId)))
+            .OnEvent(Protect((OrderPaid evn) => appClient.Dispatch(evn.OrderStreamId, evn.StreamId, evn.CorrelationId)))
             .EndOnEvent<OrderDispatched>();
 
-         this.saga = new Saga.Saga(shopping, persistence);
+         this.saga = new Saga.Saga(shopping, persistence, this.logger);
+      }
+
+      private List<Exception> failures = new List<Exception>();
+
+      private Func<TEvent, Task> Protect<TEvent>(Func<TEvent, Task> action)
+      {
+         async Task safe(TEvent evn)
+         {
+            try
+            {
+               await action(evn);
+            }
+            catch (Exception e)
+            {
+               this.failures.Add(e);
+            }
+         }
+         return safe;
+      }
+
+      private void LogActionFailures()
+      {
+         this.failures.ForEach(x => this.logger.LogError(x.ToString()));
+         this.failures.Clear();
       }
 
       protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -59,6 +86,7 @@ namespace ShoppingSaga
             try
             {
                await this.saga.Run();
+               LogActionFailures();
             }
             catch (Exception e)
             {

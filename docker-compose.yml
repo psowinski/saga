@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  mystream:
+    image: saga-mystream:2.0
+    build: #./MyStream
+      context: ./
+      dockerfile: ./MyStream/Dockerfile
+    ports:
+      - 9080:80
+
+  webapp:
+    image: saga-webapp:2.0
+    build: 
+      context: ./
+      dockerfile: ./WebApp/Dockerfile
+    ports:
+      - 9090:80
+    depends_on:
+      - mystream
+
+  shopping:
+    image: saga-shopping:2.0
+    build: 
+      context: ./
+      dockerfile: ./ShoppingSaga/Dockerfile
+    depends_on:
+      - mystream
+      - webapp

@@ -3,12 +3,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System;
+using Common.General;
 
 namespace UserScenarioApp
 {
    public class AppClient : IDisposable
    {
-      private readonly HttpClient client = new HttpClient();
+      private readonly HttpClient client = Https.CreateClient();
 
       public AppClient(string url)
       {
@@ -20,7 +21,7 @@ namespace UserScenarioApp
                $"\"orderId\": \"{orderId}\", " +
                $"\"correlationId\": \"{correlationId}\"," +
                $"\"description\": \"{description}\", " +
-               $"\"cost\": \"{cost}\"" +
+               $"\"cost\": {cost}" +
             "}");
 
       public Task Checkout(string orderId, string correlationId)

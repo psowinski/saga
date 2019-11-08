@@ -3,12 +3,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System;
+using Common.General;
 
 namespace ShoppingSaga
 {
    public class AppClient : IDisposable
    {
-      private readonly HttpClient client = new HttpClient();
+      private readonly HttpClient client = Https.CreateClient();
 
       public AppClient(string url)
       {

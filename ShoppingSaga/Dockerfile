@@ -3,9 +3,9 @@ WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.0-buster AS build
 WORKDIR /src
-COPY ["ShoppingSaga/ShoppingSaga.csproj", "ShoppingSaga/"]
-RUN dotnet restore "ShoppingSaga/ShoppingSaga.csproj"
+#COPY ["ShoppingSaga/ShoppingSaga.csproj", "ShoppingSaga/"]
 COPY . .
+RUN dotnet restore "ShoppingSaga/ShoppingSaga.csproj"
 WORKDIR "/src/ShoppingSaga"
 RUN dotnet build "ShoppingSaga.csproj" -c Release -o /app/build
 

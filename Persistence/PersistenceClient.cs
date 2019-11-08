@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Common.Aggregate;
+using Common.General;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -13,7 +14,7 @@ namespace Persistence
 {
    public class PersistenceClient : IPersistenceClient, IDisposable
    {
-      private readonly HttpClient client = new HttpClient();
+      private readonly HttpClient client = Https.CreateClient();
       private readonly JsonSerializerSettings settings;
 
       public PersistenceClient(string url)

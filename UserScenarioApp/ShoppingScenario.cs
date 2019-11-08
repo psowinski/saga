@@ -8,7 +8,7 @@ namespace UserScenarioApp
 {
    public class ShoppingScenario
    {
-      private static AppClient AppClient = new AppClient("https://localhost:44381/");
+      private static AppClient AppClient = new AppClient("http://localhost:9090/");
 
       public static async Task RunRange(int count)
       {

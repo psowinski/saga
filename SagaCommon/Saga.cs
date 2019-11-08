@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Aggregate;
+using Microsoft.Extensions.Logging;
 using Persistence;
 
 namespace Saga
@@ -13,8 +14,12 @@ namespace Saga
       private readonly SagaConfiguration configuration;
       private List<(string Category, int Version)> state;
 
-      public Saga(SagaConfiguration configuration, IPersistenceClient persistence)
+      private readonly ILogger logger;
+
+      public Saga(SagaConfiguration configuration, IPersistenceClient persistence, ILogger logger)
       {
+         this.logger = logger;
+
          this.configuration = configuration;
          this.persistence = persistence;
          InitializeCategoryState();
@@ -68,15 +73,12 @@ namespace Saga
          PrintUpdatedState(updated);
       }
 
-      public static bool ShowSagaReports = false;
       private void PrintUpdatedState(IEnumerable<(string Category, int Version)> updated)
       {
-         if (!ShowSagaReports) return;
-
          foreach (var (category, version) in updated)
          {
             var prevVersion = this.state.First(x => x.Category == category).Version;
-            Console.WriteLine(
+            this.logger.LogInformation(
                $"Processing {version - prevVersion} event(s) of category [{category}] (ver. {prevVersion + 1}-{version}).");
          }
       }

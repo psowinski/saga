@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Globalization;
+using System.Threading;
 
 namespace UserScenarioApp
 {
@@ -6,6 +8,8 @@ namespace UserScenarioApp
    {
       static void Main(string[] args)
       {
+         Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+
          PrintMenu();
          while (true)
          {
