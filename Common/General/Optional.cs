@@ -6,6 +6,7 @@ namespace Common.General
    {
       public abstract Optional<U> Bind<U>(Func<T, Optional<U>> mapper);
       public abstract Optional<U> Map<U>(Func<T, U> mapper);
+      public abstract U Match<U>(Func<T, U> some, Func<U> none);
       public abstract T ValueOr(Func<T> generateValue);
    }
 
@@ -20,6 +21,7 @@ namespace Common.General
 
       public override Optional<U> Bind<U>(Func<T, Optional<U>> mapper) => mapper(Value);
       public override Optional<U> Map<U>(Func<T, U> mapper) => new Some<U>(mapper(Value));
+      public override U Match<U>(Func<T, U> some, Func<U> none) => some(Value);
       public override T ValueOr(Func<T> generateValue) => Value;
    }
 
@@ -28,6 +30,7 @@ namespace Common.General
    {
       public override Optional<U> Bind<U>(Func<T, Optional<U>> mapper) => new None<U>();
       public override Optional<U> Map<U>(Func<T, U> mapper) => new None<U>();
+      public override U Match<U>(Func<T, U> some, Func<U> none) => none();
       public override T ValueOr(Func<T> generateValue) => generateValue();
    }
 }
