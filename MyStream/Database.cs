@@ -27,6 +27,20 @@ namespace MyStream
          }
       }
 
+      public Task<List<string>> GetAllCategories()
+      {
+         lock (dataLock)
+         {
+            var categories = this.data
+               .Where(
+                  x => x.GetInt64PropertyValue("version") == 1 &&
+                       x.GetStringPropertyValue("streamId").StartsWith("byCategoryIndex-"))
+               .Select(x => x.GetStringPropertyValue("streamId").Substring(16))
+               .ToList();
+            return Task.FromResult(categories);
+         }
+      }
+
       public Task Save(JsonElement evn)
       {
          lock (dataLock)
