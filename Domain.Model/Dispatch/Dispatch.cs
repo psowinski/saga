@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Common.Aggregate;
 
@@ -29,7 +30,7 @@ namespace Domain.Dispatch
          switch (evn)
          {
             case OrderDispatched x: Apply(x); break;
-            default: throw new InvalidEnumArgumentException(nameof(evn));
+            default: throw new ArgumentException(nameof(evn));
          }
       }
    }

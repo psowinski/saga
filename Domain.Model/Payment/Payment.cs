@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using Common.Aggregate;
 
 namespace Domain.Payment
@@ -25,7 +26,7 @@ namespace Domain.Payment
          switch (evn)
          {
             case OrderPaid x: Apply(x); break;
-            default: throw new InvalidEnumArgumentException(nameof(evn));
+            default: throw new ArgumentException(nameof(evn));
          }
       }
    }

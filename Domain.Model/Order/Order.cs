@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Common.Aggregate;
 
@@ -34,7 +35,7 @@ namespace Domain.Order
          {
             case OrderItemAdded x: Apply(x); break;
             case OrderCheckedOut x: Apply(x); break;
-            default: throw new InvalidEnumArgumentException(nameof(evn));
+            default: throw new ArgumentException(nameof(evn));
          }
       }
    }
