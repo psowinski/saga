@@ -48,7 +48,7 @@ namespace MyPay
       {
          lock (paymentLock)
          {
-            if (!this.payments.Any(x => x.RequestId == request.RequestId))
+            if (this.payments.All(x => x.RequestId != request.RequestId))
             {
                this.payments.Add(new Payment
                {
