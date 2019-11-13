@@ -1,12 +1,11 @@
 ﻿using System;
-using System.ComponentModel;
 using Common.Aggregate;
 
 namespace Domain.Payment
 {
-   public class Payment : State
+   public class Payment_v1 : State
    {
-      public Payment(string streamId) : base(streamId)
+      public Payment_v1(string streamId) : base(streamId)
       {
       }
 

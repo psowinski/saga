@@ -7,7 +7,8 @@ namespace Persistence
    public interface IPersistenceClient
    {
       string CreateCategoryIndexStreamId(string category);
-      Task<T> GetState<T>(string streamId) where T : State;
+      Task<TState> GetState<TState, TUpdater>(string streamId) 
+         where TState : State where TUpdater : EventUpdater<TState>, new();
       Task<List<T>> Load<T>(string streamId);
       Task<List<T>> Load<T>(string streamId, int fromVersion);
       Task<List<T>> Load<T>(string streamId, int fromVersion, int toVersion);

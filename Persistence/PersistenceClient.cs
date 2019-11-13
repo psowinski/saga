@@ -77,11 +77,13 @@ namespace Persistence
 
       public string CreateCategoryIndexStreamId(string category) => "byCategoryIndex-" + category;
 
-      public async Task<T> GetState<T>(string streamId) where T : State
+      public async Task<TState> GetState<TState, TUpdater>(string streamId) 
+         where TState : State where TUpdater : EventUpdater<TState>, new()
       {
-         var zero = (T)Activator.CreateInstance(typeof(T), streamId);
-         var events = await Load<Event>(streamId);
-         events.ForEach(zero.Apply);
+         var updater = new TUpdater();
+         var zero = (TState)Activator.CreateInstance(typeof(TState), streamId);
+         var events = await Load<AggregateEvent<TState>>(streamId);
+         zero.Apply(events.SelectMany(updater.Update));
          return zero;
       }
    }

@@ -2,7 +2,8 @@
 
 namespace Domain.Payment
 {
-   public class OrderPaid : AggregateEvent<Payment>
+   //payment ver. 1 replaced in ver. 2 by PaymentRequested & PaymentCompleted
+   public class OrderPaid : AggregateEvent<Payment_v1>
    {
       public string OrderStreamId { get; set; }
       public decimal Amount { get; set; }

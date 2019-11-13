@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Common.Aggregate;
 using Domain.Order;
 using Persistence;
 using Common.General;
+using DomainOrder = Domain.Order.Order;
 
 namespace App
 {
    public class Order
    {
-      IPersistenceClient persistence;
+      private readonly IPersistenceClient persistence;
 
       public Order(IPersistenceClient persistence)
       {
@@ -17,8 +19,8 @@ namespace App
 
       public async Task AddItem(Optional<string> orderId, string correlationId, string description, decimal cost)
       {
-         var orderStreamId = orderId.ValueOr(() => StreamNumbering.NewStreamId<Domain.Order.Order>());
-         var order = await this.persistence.GetState<Domain.Order.Order>(orderStreamId);
+         var orderStreamId = orderId.ValueOr(StreamNumbering.NewStreamId<DomainOrder>);
+         var order = await this.persistence.GetState<DomainOrder, EventUpdater<DomainOrder>>(orderStreamId);
 
          var itemAdded = new AddOrderItem(correlationId, DateTime.Now)
          {
@@ -31,7 +33,7 @@ namespace App
 
       public async Task Checkout(string orderId, string correlationId)
       {
-         var order = await this.persistence.GetState<Domain.Order.Order>(orderId);
+         var order = await this.persistence.GetState<DomainOrder, EventUpdater<DomainOrder>>(orderId);
          var orderCheckedOut = new CheckOutOrder(correlationId, DateTime.Now).Execute(order);
          await this.persistence.Save(orderCheckedOut);
       }

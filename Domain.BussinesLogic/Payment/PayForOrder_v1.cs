@@ -4,9 +4,9 @@ using Common.Aggregate;
 
 namespace Domain.Payment
 {
-   public class PayForOrder : Command
+   public class PayForOrder_v1 : Command
    {
-      public PayForOrder(string correlationId, DateTime timeStamp) : base(correlationId, timeStamp)
+      public PayForOrder_v1(string correlationId, DateTime timeStamp) : base(correlationId, timeStamp)
       {
       }
 
@@ -19,13 +19,13 @@ namespace Domain.Payment
          if (Amount <= 0) throw new InvalidDataException(nameof(Amount));
       }
 
-      public OrderPaid Execute(Payment state)
+      public OrderPaid Execute(Payment_v1 state)
       {
          Validate();
          return CreateEvent(state);
       }
 
-      private OrderPaid CreateEvent(Payment state)
+      private OrderPaid CreateEvent(Payment_v1 state)
       {
          var evn = CreateEvent<OrderPaid>(state);
          evn.OrderStreamId = OrderStreamId;

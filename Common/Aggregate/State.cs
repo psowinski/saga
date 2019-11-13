@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Common.Aggregate
 {
@@ -25,5 +26,11 @@ namespace Common.Aggregate
       }
 
       public abstract void Apply(Event evn);
+
+      public void Apply(IEnumerable<Event> events)
+      {
+         foreach (var evn in events)
+            Apply(evn);
+      }
    }
 }

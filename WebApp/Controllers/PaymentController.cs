@@ -28,7 +28,7 @@ namespace WebApp.Controllers
       {
          try
          {
-            await this.app.Pay(
+            await this.app.Pay_v1(
                cmd.GetProperty("orderId").GetString(),
                cmd.GetProperty("correlationId").GetString());
          }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Domain.Order;
+using Common.Aggregate;
+using DomainOrder = Domain.Order.Order;
+using DomainDispatch = Domain.Dispatch.Dispatch;
 using Domain.Dispatch;
 using Persistence;
 using Common.General;
@@ -9,7 +11,7 @@ namespace App
 {
    public class Dispatch
    {
-      IPersistenceClient persistence;
+      private readonly IPersistenceClient persistence;
 
       public Dispatch(IPersistenceClient persistence)
       {
@@ -18,8 +20,8 @@ namespace App
 
       public async Task DispatchOrder(string orderId, string paymentId, string correlationId)
       {
-         var state = new Domain.Dispatch.Dispatch(StreamNumbering.NewStreamId<Domain.Dispatch.Dispatch>());
-         var order = await this.persistence.GetState<Domain.Order.Order>(orderId);
+         var state = new DomainDispatch(StreamNumbering.NewStreamId<DomainDispatch>());
+         var order = await this.persistence.GetState<DomainOrder, EventUpdater<DomainOrder>>(orderId);
 
          var dispatched = new DispatchOrder(correlationId, DateTime.Now)
          {
