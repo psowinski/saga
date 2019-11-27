@@ -47,6 +47,7 @@ namespace ShoppingSaga
 
          var shopping = new SagaConfiguration()
             .OnEvent(Protect((OrderCheckedOut evn) => appClient.Pay(evn.StreamId, evn.CorrelationId)))
+            .OnEvent(Protect((PaymentRequested evn) => appClient.FinalizePayment(evn.StreamId, evn.CorrelationId, evn.Total, evn.Description)))
             .OnEvent(Protect((OrderPaid evn) => appClient.Dispatch(evn.OrderStreamId, evn.StreamId, evn.CorrelationId)))
             .EndOnEvent<OrderDispatched>();
 

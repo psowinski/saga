@@ -17,10 +17,10 @@ namespace WebApp.Controllers
       private readonly ILogger<PaymentController> logger;
       private readonly Payment app;
 
-      public PaymentController(ILogger<PaymentController> logger, IPersistenceClient persistence)
+      public PaymentController(ILogger<PaymentController> logger, IPersistenceClient persistence, IMyPayClient myPay)
       {
          this.logger = logger;
-         this.app = new Payment(persistence);
+         this.app = new Payment(persistence, myPay);
       }
 
       [HttpPost]
@@ -28,9 +28,28 @@ namespace WebApp.Controllers
       {
          try
          {
-            await this.app.Pay_v1(
+            await this.app.PayV2(
                cmd.GetProperty("orderId").GetString(),
                cmd.GetProperty("correlationId").GetString());
+         }
+         catch (Exception e)
+         {
+            this.logger.LogError(e.Message);
+            return BadRequest();
+         }
+         return Ok();
+      }
+
+      [HttpPost("finalize")]
+      public async Task<ActionResult> Finalize([FromBody] JsonElement cmd)
+      {
+         try
+         {
+            await this.app.FinalizePayment(
+               cmd.GetProperty("paymentId").GetString(),
+               cmd.GetProperty("correlationId").GetString(),
+               cmd.GetProperty("total").GetDecimal(),
+               cmd.GetProperty("description").GetString());
          }
          catch (Exception e)
          {

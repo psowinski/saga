@@ -8,7 +8,7 @@ namespace Persistence
    {
       string CreateCategoryIndexStreamId(string category);
       Task<TState> GetState<TState, TUpdater>(string streamId) 
-         where TState : State where TUpdater : EventUpdater<TState>, new();
+         where TState : State where TUpdater : IEventUpdater<TState>, new();
       Task<List<T>> Load<T>(string streamId);
       Task<List<T>> Load<T>(string streamId, int fromVersion);
       Task<List<T>> Load<T>(string streamId, int fromVersion, int toVersion);

@@ -3,24 +3,25 @@ using Common.Aggregate;
 
 namespace Domain.Payment
 {
-   public enum PaymentState
+   public enum PaymentStatus
    {
+      Unpaid,
       Pending,
       Completed,
       Cancelled
    }
 
-   public class Payment_v2 : State
+   public class PaymentV2 : State
    {
-      public Payment_v2(string streamId) : base(streamId)
+      public PaymentV2(string streamId) : base(streamId)
       {
-         State = PaymentState.Pending;
+         Status = PaymentStatus.Unpaid;
       }
 
       public string OrderStreamId { get; private set; }
       public decimal Total { get; private set; }
       public string Description { get; private set; }
-      public PaymentState State { get; private set; }
+      public PaymentStatus Status { get; private set; }
 
       public void Apply(PaymentRequested evn)
       {
@@ -29,17 +30,18 @@ namespace Domain.Payment
          OrderStreamId = evn.OrderStreamId;
          Total = evn.Total;
          Description = evn.Description;
+         Status = PaymentStatus.Pending;
       }
 
       public void Apply(PaymentCompleted evn)
       {
          base.ApplyVersion(evn);
-         State = PaymentState.Completed;
+         Status = PaymentStatus.Completed;
       }
       public void Apply(PaymentCancelled evn)
       {
          base.ApplyVersion(evn);
-         State = PaymentState.Cancelled;
+         Status = PaymentStatus.Cancelled;
       }
 
       public override void Apply(Event evn)

@@ -55,7 +55,7 @@ namespace MyPay
                   RequestId = request.RequestId,
                   Total = request.Total,
                   Description = request.Description,
-                  TimeToConfirm = DateTime.Now.Millisecond + rnd.Next(1000, 5000)
+                  TimeToConfirm = DateTime.Now.Millisecond // + rnd.Next(1000, 5000)
                }); ;
             }
             return Task.CompletedTask;

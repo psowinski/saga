@@ -25,7 +25,7 @@ namespace MyPay.Controllers
          return Ok();
       }
 
-      [HttpGet("status/{requestId}")]
+      [HttpGet("{requestId}/state")]
       public async Task<ActionResult<string>> GetStatus(string requestId)
       {
          var paymentStatus = await this.myPayService.GetStatus(requestId);
@@ -42,7 +42,7 @@ namespace MyPay.Controllers
                this.logger.LogInformation($"Payment with request id {requestId} has status {status}.");
                return Ok(status);
             },
-            none: () => BadRequest());
+            none: () => NotFound());
       }
    }
 }

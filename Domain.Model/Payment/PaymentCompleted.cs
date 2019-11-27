@@ -2,7 +2,7 @@
 
 namespace Domain.Payment
 {
-   public class PaymentCompleted : AggregateEvent<Payment_v1>
+   public class PaymentCompleted : AggregateEvent<PaymentV2>
    {
    }
 }

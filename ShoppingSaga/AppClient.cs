@@ -22,6 +22,15 @@ namespace ShoppingSaga
                $"\"correlationId\": \"{correlationId}\"" +
             "}");
 
+      public Task FinalizePayment(string paymentId, string correlationId, decimal total, string description)
+         => PostAsync("payment/finalize", "{" +
+                              $"\"paymentId\": \"{paymentId}\", " +
+                              $"\"correlationId\": \"{correlationId}\"" +
+                              $"\"total\": {total}" +
+                              $"\"description\": \"{description}\"" +
+                              "}");
+
+
       public Task Dispatch(string orderId, string paymentId, string correlationId)
          => PostAsync("dispatch", "{" +
                $"\"orderId\": \"{orderId}\", " +

@@ -21,7 +21,7 @@ namespace App
       public async Task DispatchOrder(string orderId, string paymentId, string correlationId)
       {
          var state = new DomainDispatch(StreamNumbering.NewStreamId<DomainDispatch>());
-         var order = await this.persistence.GetState<DomainOrder, EventUpdater<DomainOrder>>(orderId);
+         var order = await this.persistence.GetState<DomainOrder, GeneralUpdater<DomainOrder>>(orderId);
 
          var dispatched = new DispatchOrder(correlationId, DateTime.Now)
          {

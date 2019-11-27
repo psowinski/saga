@@ -4,26 +4,26 @@ using System.Collections.Generic;
 
 namespace Domain.Payment
 {
-   public class PaymentEventUpdater : EventUpdater<Payment_v1>
+   public class PaymentEventUpdater : IEventUpdater<PaymentV2>
    {
-      public override IEnumerable<AggregateEvent<Payment_v1>> Update(AggregateEvent<Payment_v1> evn)
+      public IEnumerable<AggregateEvent<PaymentV2>> Update(Event evn)
       {
-         switch (evn)
+         return evn switch
          {
-            case OrderPaid x: return Update(x);
-            default: throw new ArgumentException(nameof(evn));
-         }
+            OrderPaid x => Update(x),
+            _ => throw new ArgumentException(nameof(evn))
+         };
       }
 
-      public IEnumerable<AggregateEvent<Payment_v1>> Update(OrderPaid evn)
+      public IEnumerable<AggregateEvent<PaymentV2>> Update(OrderPaid evn)
       {
-         var paymentRequested = CopyEvent<PaymentRequested>(evn);
+         var paymentRequested = evn.CopyTo<PaymentRequested>();
          paymentRequested.OrderStreamId = evn.OrderStreamId;
          paymentRequested.Total = evn.Amount;
          paymentRequested.Description = "";
          yield return paymentRequested;
 
-         yield return CopyEvent<PaymentCompleted>(evn);
+         yield return evn.CopyTo<PaymentCompleted>();
       }
    }
 }

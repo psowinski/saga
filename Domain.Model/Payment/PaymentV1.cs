@@ -3,9 +3,9 @@ using Common.Aggregate;
 
 namespace Domain.Payment
 {
-   public class Payment_v1 : State
+   public class PaymentV1 : State
    {
-      public Payment_v1(string streamId) : base(streamId)
+      public PaymentV1(string streamId) : base(streamId)
       {
       }
 

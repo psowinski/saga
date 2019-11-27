@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using App;
 using Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -29,6 +30,8 @@ namespace WebApp
          services.AddControllers();
          services.AddSingleton<IPersistenceClient>(
             new PersistenceClient(Configuration.GetValue<string>("PersistenceUrl")));
+         services.AddSingleton<IMyPayClient>(
+            new MyPayClient(Configuration.GetValue<string>("MyPayUrl")));
       }
 
       // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
