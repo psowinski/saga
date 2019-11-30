@@ -5,12 +5,27 @@ using Common.Aggregate;
 
 namespace Saga
 {
+   public enum ActionStatus
+   {
+      Ok,
+      Pending,
+      Error
+   }
+
    public class SagaConfiguration
    {
       private readonly HashSet<string> trackedCategories = new HashSet<string>();
-      private readonly Dictionary<string, Func<Event, Task>> eventActions = new Dictionary<string, Func<Event, Task>>();
-      private readonly Func<Event, Task> DoNothing = _ => Task.CompletedTask;
-      private void AddAnyAction<TEvent>(Func<Event, Task> action) where TEvent : Event
+      private readonly Dictionary<string, Func<Event, Task<ActionStatus>>> eventActions = new Dictionary<string, Func<Event, Task<ActionStatus>>>();
+      private readonly Func<Event, Task<ActionStatus>> DoNothing = _ => Task.FromResult(ActionStatus.Ok);
+
+      public SagaConfiguration(string name)
+      {
+         Name = name;
+      }
+
+      public string Name { get; }
+
+      private void AddAnyAction<TEvent>(Func<Event, Task<ActionStatus>> action) where TEvent : Event
       {
          var type = typeof(TEvent);
          var category = type.BaseType.GetProperty("Category").GetValue(null) as string;
@@ -19,15 +34,17 @@ namespace Saga
          eventActions[eventType] = action;
       }
 
-      public SagaConfiguration OnEvent<TEvent>(Func<TEvent, Task> action) where TEvent : Event
+      public SagaConfiguration OnEvent<TEvent>(Func<TEvent, Task<ActionStatus>> action) where TEvent : Event
       {
          if (action == null) throw new ArgumentNullException(nameof(action));
-         Func<Event, Task> general = evn =>
+
+         Task<ActionStatus> General(Event evn)
          {
             if (!(evn is TEvent specialized)) throw new ArgumentException(evn.ToString());
             return action(specialized);
-         };
-         AddAnyAction<TEvent>(general);
+         }
+
+         AddAnyAction<TEvent>(General);
          return this;
       }
 
@@ -37,12 +54,8 @@ namespace Saga
          return this;
       }
 
-      public Func<Event, Task> GetAction(string eventType)
-      {
-         if (this.eventActions.TryGetValue(eventType, out var action))
-            return action;
-         return DoNothing;
-      }
+      public Func<Event, Task<ActionStatus>> GetAction(string eventType)
+         => this.eventActions.TryGetValue(eventType, out var action) ? action : DoNothing;
 
       public bool IsKnownEventType(string eventType) => this.eventActions.ContainsKey(eventType);
 

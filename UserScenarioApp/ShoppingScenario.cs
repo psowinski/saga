@@ -28,6 +28,8 @@ namespace UserScenarioApp
          var orderId = StreamNumbering.NewStreamId<Order>();
          var correlationId = StreamNumbering.NewCorrelationId();
 
+         await Delayer.WaitSomeTime();
+
          await AppClient.AddItem(orderId, correlationId, "Apple", 3.00m);
          Console.WriteLine($"[{correlationId}/{orderId}] Adding apple - 3.00");
 

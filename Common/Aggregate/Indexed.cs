@@ -10,5 +10,8 @@ namespace Common.Aggregate
       public string RefType { get; set; }
       public string RefCorrelationId { get; set; }
       public DateTime RefTimeStamp { get; set; }
+
+      private string category;
+      public string Category => this.category ??= StreamId.Substring(StreamId.IndexOf('-') + 1);
    }
 }

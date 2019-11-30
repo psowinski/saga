@@ -23,7 +23,7 @@ namespace App
       public async Task PayV1(string orderId, string correlationId)
       {
          var state = new PaymentV1(StreamNumbering.NewStreamId<PaymentV1>());
-         var order = await this.persistence.GetState<DomainOrder, GeneralUpdater<DomainOrder>>(orderId);
+         var order = await this.persistence.GetState<DomainOrder>(orderId);
 
          var payed = new PayForOrderV1(correlationId, DateTime.Now)
          {
@@ -37,7 +37,7 @@ namespace App
       public async Task PayV2(string orderId, string correlationId)
       {
          var state = new PaymentV2(StreamNumbering.NewStreamId<PaymentV2>());
-         var order = await this.persistence.GetState<DomainOrder, GeneralUpdater<DomainOrder>>(orderId);
+         var order = await this.persistence.GetState<DomainOrder>(orderId);
 
          var payed = new PayForOrderV2(correlationId, DateTime.Now)
          {
@@ -61,7 +61,7 @@ namespace App
             return false;
          }
 
-         var state = await this.persistence.GetState<PaymentV2, PaymentEventUpdater>(paymentId);
+         var state = await this.persistence.GetState<PaymentV2>(paymentId);
          var evn = status switch
          {
             PaymentStatus.Completed => new CompletePayment(correlationId, DateTime.Now).Execute(state) as Event,

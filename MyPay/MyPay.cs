@@ -32,7 +32,7 @@ namespace MyPay
       public string Description { get; set; }
       public PaymentStatus Status { get; private set; }
 
-      public int TimeToConfirm { get; set; }
+      public DateTime TimeToConfirm { get; set; }
 
       public void Cancel() => Status = PaymentStatus.Cancelled;
       public void Complete() => Status = PaymentStatus.Completed;
@@ -55,7 +55,7 @@ namespace MyPay
                   RequestId = request.RequestId,
                   Total = request.Total,
                   Description = request.Description,
-                  TimeToConfirm = DateTime.Now.Millisecond // + rnd.Next(1000, 5000)
+                  TimeToConfirm = DateTime.Now.AddSeconds(rnd.Next(1, 5))
                }); ;
             }
             return Task.CompletedTask;
@@ -69,7 +69,7 @@ namespace MyPay
             var payment = this.payments.FirstOrDefault(x => x.RequestId == requestId);
             if (payment != null)
             {
-               if (payment.Status == PaymentStatus.Pending && payment.TimeToConfirm >= DateTime.Now.Millisecond)
+               if (payment.Status == PaymentStatus.Pending && DateTime.Now >= payment.TimeToConfirm)
                {
                   if (rnd.Next(0, 3) == 0) //reject 25%
                      payment.Cancel();

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using App;
+using Domain.Payment;
 using Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -29,7 +30,7 @@ namespace WebApp
       {
          services.AddControllers();
          services.AddSingleton<IPersistenceClient>(
-            new PersistenceClient(Configuration.GetValue<string>("PersistenceUrl")));
+            new PersistenceClient(Configuration.GetValue<string>("PersistenceUrl"), new PaymentEventUpdater()));
          services.AddSingleton<IMyPayClient>(
             new MyPayClient(Configuration.GetValue<string>("MyPayUrl")));
       }

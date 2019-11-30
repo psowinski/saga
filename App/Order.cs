@@ -20,7 +20,7 @@ namespace App
       public async Task AddItem(Optional<string> orderId, string correlationId, string description, decimal cost)
       {
          var orderStreamId = orderId.ValueOr(StreamNumbering.NewStreamId<DomainOrder>);
-         var order = await this.persistence.GetState<DomainOrder, GeneralUpdater<DomainOrder>>(orderStreamId);
+         var order = await this.persistence.GetState<DomainOrder>(orderStreamId);
 
          var itemAdded = new AddOrderItem(correlationId, DateTime.Now)
          {
@@ -33,7 +33,7 @@ namespace App
 
       public async Task Checkout(string orderId, string correlationId)
       {
-         var order = await this.persistence.GetState<DomainOrder, GeneralUpdater<DomainOrder>>(orderId);
+         var order = await this.persistence.GetState<DomainOrder>(orderId);
          var orderCheckedOut = new CheckOutOrder(correlationId, DateTime.Now).Execute(order);
          await this.persistence.Save(orderCheckedOut);
       }

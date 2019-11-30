@@ -18,7 +18,9 @@ namespace Domain.Payment
       public PaymentCompleted Execute(PaymentV2 state)
       {
          Validate(state);
-         return CreateEvent<PaymentCompleted>(state);
+         var evn = CreateEvent<PaymentCompleted>(state);
+         evn.OrderStreamId = state.OrderStreamId;
+         return evn;
       }
    }
 }

@@ -9,6 +9,14 @@ services:
     ports:
       - 9080:80
 
+  mypay:
+    image: saga-mypay:2.0
+    build: 
+      context: ./
+      dockerfile: ./MyPay/Dockerfile
+    ports:
+      - 9082:80
+
   webapp:
     image: saga-webapp:2.0
     build: 
@@ -18,6 +26,7 @@ services:
       - 9090:80
     depends_on:
       - mystream
+      - mypay
 
   shopping:
     image: saga-shopping:2.0

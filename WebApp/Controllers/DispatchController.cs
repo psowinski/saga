@@ -32,7 +32,7 @@ namespace WebApp.Controllers
          }
          catch (Exception e)
          {
-            this.logger.LogError(e.Message);
+            this.logger.LogError(e.ToString());
             return BadRequest();
          }
          return Ok();

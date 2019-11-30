@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -16,8 +17,9 @@ namespace Persistence
    {
       private readonly HttpClient client = Https.CreateClient();
       private readonly JsonSerializerSettings settings;
+      private readonly Func<Event, IEnumerable<Event>> update;
 
-      public PersistenceClient(string url)
+      public PersistenceClient(string url, params IEventUpdater[] updaters)
       {
          this.client.BaseAddress = new Uri(url);
          this.settings = new JsonSerializerSettings
@@ -25,6 +27,15 @@ namespace Persistence
             ContractResolver = new CamelCasePropertyNamesContractResolver(),
             Converters = { new EventConverter() }
          };
+         this.update = updaters
+            .Select<IEventUpdater, Func<Event, IEnumerable<Event>>>(x => x.Update)
+            .Aggregate(ComposeUpdates);
+      }
+      private Func<Event, IEnumerable<Event>> ComposeUpdates(
+         Func<Event, IEnumerable<Event>> prev,
+         Func<Event, IEnumerable<Event>> next)
+      {
+         return evn => prev(evn).SelectMany(next);
       }
 
       private bool disposed = false;
@@ -56,8 +67,8 @@ namespace Persistence
          var response = await this.client.GetAsync(url);
          if (response.StatusCode != HttpStatusCode.OK) throw new Exception(response.ToString());
          var json = await response.Content.ReadAsStringAsync();
-         var events = JsonConvert.DeserializeObject<List<T>>(json, this.settings);
-         return events;
+         var events = JsonConvert.DeserializeObject<List<Event>>(json, this.settings);
+         return events.SelectMany(this.update).OfType<T>().ToList();
       }
 
       public Task<List<T>> Load<T>(string streamId)
@@ -77,13 +88,12 @@ namespace Persistence
 
       public string CreateCategoryIndexStreamId(string category) => "byCategoryIndex-" + category;
 
-      public async Task<TState> GetState<TState, TUpdater>(string streamId) 
-         where TState : State where TUpdater : IEventUpdater<TState>, new()
+      public async Task<TState> GetState<TState>(string streamId) 
+         where TState : State
       {
-         var updater = new TUpdater();
          var zero = (TState)Activator.CreateInstance(typeof(TState), streamId);
          var events = await Load<AggregateEvent<TState>>(streamId);
-         zero.Apply(events.SelectMany(updater.Update));
+         zero.Apply(events);
          return zero;
       }
    }

@@ -21,28 +21,45 @@ namespace MyPay.Controllers
       [HttpPost]
       public async Task<ActionResult> Post([FromBody]PaymentRequest request)
       {
-         await this.myPayService.RequestPayment(request);
-         return Ok();
+         try
+         {
+            await this.myPayService.RequestPayment(request);
+            return Ok();
+         }
+         catch (Exception e)
+         {
+            this.logger.LogError(e.ToString());
+            return BadRequest();
+         }
       }
 
       [HttpGet("{requestId}/state")]
       public async Task<ActionResult<string>> GetStatus(string requestId)
       {
-         var paymentStatus = await this.myPayService.GetStatus(requestId);
-         var report = paymentStatus.Map(x => x switch
+         try
          {
-            PaymentStatus.Pending => "pending",
-            PaymentStatus.Completed => "completed",
-            PaymentStatus.Cancelled => "cancelled",
-            _ => throw new ArgumentException()
-         });
+            var paymentStatus = await this.myPayService.GetStatus(requestId);
+            var report = paymentStatus.Map(x => x switch
+            {
+               PaymentStatus.Pending => "pending",
+               PaymentStatus.Completed => "completed",
+               PaymentStatus.Cancelled => "cancelled",
+               _ => throw new ArgumentException()
+            });
 
-         return report.Match<ActionResult<string>>(
-            some: status => {
-               this.logger.LogInformation($"Payment with request id {requestId} has status {status}.");
-               return Ok(status);
-            },
-            none: () => NotFound());
+            return report.Match<ActionResult<string>>(
+               some: status =>
+               {
+                  this.logger.LogInformation($"Payment with request id {requestId} has status {status}.");
+                  return Ok(status);
+               },
+               none: () => NotFound());
+         }
+         catch (Exception e)
+         {
+            this.logger.LogError(e.ToString());
+            return BadRequest();
+         }
       }
    }
 }

@@ -20,8 +20,7 @@ namespace App
 
       public async Task SendPaymentRequest(string requestId, decimal total, string description)
       {
-         var json = "{" +
-                    $"{{\"requestId\": \"{requestId}\", " +
+         var json = $"{{\"requestId\": \"{requestId}\", " +
                     $"\"total\": {(int)(total*100)}, " +
                     $"\"description\": \"{description}\"}}";
          var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -37,12 +36,14 @@ namespace App
             return PaymentStatus.Unpaid;
          if (response.StatusCode != HttpStatusCode.OK)
             throw new Exception(response.ToString());
-         return response.Content.ToString() switch
+
+         var answer = await response.Content.ReadAsStringAsync();
+         return answer switch
          {
             "pending" => PaymentStatus.Pending,
             "completed" => PaymentStatus.Completed,
             "cancelled" => PaymentStatus.Cancelled,
-            _ => throw new Exception(response.ToString())
+            _ => throw new Exception("Invalid response content: " + answer)
          };
       }
    }

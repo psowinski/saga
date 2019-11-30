@@ -4,18 +4,18 @@ using System.Collections.Generic;
 
 namespace Domain.Payment
 {
-   public class PaymentEventUpdater : IEventUpdater<PaymentV2>
+   public class PaymentEventUpdater : IEventUpdater
    {
-      public IEnumerable<AggregateEvent<PaymentV2>> Update(Event evn)
+      public IEnumerable<Event> Update(Event evn)
       {
          return evn switch
          {
             OrderPaid x => Update(x),
-            _ => throw new ArgumentException(nameof(evn))
+            _ => new[] { evn }
          };
       }
 
-      public IEnumerable<AggregateEvent<PaymentV2>> Update(OrderPaid evn)
+      public IEnumerable<Event> Update(OrderPaid evn)
       {
          var paymentRequested = evn.CopyTo<PaymentRequested>();
          paymentRequested.OrderStreamId = evn.OrderStreamId;
@@ -23,7 +23,9 @@ namespace Domain.Payment
          paymentRequested.Description = "";
          yield return paymentRequested;
 
-         yield return evn.CopyTo<PaymentCompleted>();
+         var paymentCompleted = evn.CopyTo<PaymentCompleted>();
+         paymentCompleted.OrderStreamId = evn.OrderStreamId;
+         yield return paymentCompleted;
       }
    }
 }

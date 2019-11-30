@@ -56,7 +56,7 @@ namespace MyStream.Controllers
          }
          catch (Exception e)
          {
-            this.logger.LogInformation(e.Message);
+            this.logger.LogInformation(e.ToString());
             return BadRequest();
          }
          return Ok();

@@ -34,7 +34,7 @@ namespace WebApp.Controllers
          }
          catch (Exception e)
          {
-            this.logger.LogError(e.Message);
+            this.logger.LogError(e.ToString());
             return BadRequest();
          }
          return Ok();
@@ -45,18 +45,19 @@ namespace WebApp.Controllers
       {
          try
          {
-            await this.app.FinalizePayment(
+            var isFinalized = await this.app.FinalizePayment(
                cmd.GetProperty("paymentId").GetString(),
                cmd.GetProperty("correlationId").GetString(),
                cmd.GetProperty("total").GetDecimal(),
                cmd.GetProperty("description").GetString());
+
+            return isFinalized ? Ok() : Accepted() as ActionResult;
          }
          catch (Exception e)
          {
-            this.logger.LogError(e.Message);
+            this.logger.LogError($"Finalize fail: {e.ToString()}");
             return BadRequest();
          }
-         return Ok();
       }
    }
 }
