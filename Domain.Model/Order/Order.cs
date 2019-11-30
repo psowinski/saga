@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using Common.Aggregate;
 
-namespace Domain.Order
+namespace Domain.Model.Order
 {
    public class Order : State
    {

@@ -1,9 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Domain.Order;
-using Domain.Payment;
-using Domain.Dispatch;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Saga;
@@ -12,6 +9,9 @@ using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using Common.Aggregate;
+using Domain.Model.Dispatch;
+using Domain.Model.Order;
+using Domain.Model.Payment;
 
 namespace ShoppingSaga
 {

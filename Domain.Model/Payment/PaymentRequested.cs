@@ -1,8 +1,8 @@
 ﻿using Common.Aggregate;
 
-namespace Domain.Payment
+namespace Domain.Model.Payment
 {
-   public class PaymentRequested : AggregateEvent<PaymentV2>
+   public class PaymentRequested : AggregateEvent<Payment>
    {
       public string OrderStreamId { get; set; }
       public decimal Total { get; set; }

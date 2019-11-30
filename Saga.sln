@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Common.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.Model", "Domain.Model\Domain.Model.csproj", "{8A70E333-ABED-4669-99F3-E510F0E67906}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.BussinesLogic", "Domain.BussinesLogic\Domain.BussinesLogic.csproj", "{F8426463-31A5-4398-B774-EF71F894094C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.BusinessLogic", "Domain.BussinesLogic\Domain.BusinessLogic.csproj", "{F8426463-31A5-4398-B774-EF71F894094C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Persistence", "Persistence\Persistence.csproj", "{D157F1B4-96B6-434D-9B72-AD76EB180A3B}"
 EndProject
@@ -28,7 +28,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		docker-compose.yml = docker-compose.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyPay", "MyPay\MyPay.csproj", "{B118E31B-6BEF-488A-8874-344FB035F2BA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyPay", "MyPay\MyPay.csproj", "{B118E31B-6BEF-488A-8874-344FB035F2BA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

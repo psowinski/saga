@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
 using Common.Aggregate;
+using Domain.Model.Payment;
 
-namespace Domain.Payment
+namespace Domain.BusinessLogic.Payment
 {
    public class CancelPayment : Command
    {
@@ -10,12 +11,12 @@ namespace Domain.Payment
       {
       }
 
-      private void Validate(PaymentV2 state)
+      private void Validate(Model.Payment.Payment state)
       {
          if (state.Status != PaymentStatus.Pending) throw new InvalidDataException(nameof(state.Status));
       }
 
-      public PaymentCancelled Execute(PaymentV2 state)
+      public PaymentCancelled Execute(Model.Payment.Payment state)
       {
          Validate(state);
          return CreateEvent<PaymentCancelled>(state);

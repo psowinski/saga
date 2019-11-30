@@ -1,8 +1,8 @@
 ﻿using Common.Aggregate;
 
-namespace Domain.Payment
+namespace Domain.Model.Payment
 {
-   public class PaymentCancelled : AggregateEvent<PaymentV2>
+   public class PaymentCancelled : AggregateEvent<Payment>
    {
    }
 }

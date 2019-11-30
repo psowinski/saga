@@ -2,10 +2,11 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Aggregate;
-using Domain.Payment;
 using Persistence;
 using Common.General;
-using DomainOrder = Domain.Order.Order;
+using Domain.BusinessLogic.Payment;
+using Domain.Model.Payment;
+using DomainOrder = Domain.Model.Order.Order;
 
 namespace App
 {
@@ -22,10 +23,10 @@ namespace App
 
       public async Task PayV1(string orderId, string correlationId)
       {
-         var state = new PaymentV1(StreamNumbering.NewStreamId<PaymentV1>());
+         var state = new Domain.Model.Payment.V1.Payment(StreamNumbering.NewStreamId<Domain.Model.Payment.V1.Payment>());
          var order = await this.persistence.GetState<DomainOrder>(orderId);
 
-         var payed = new PayForOrderV1(correlationId, DateTime.Now)
+         var payed = new Domain.BusinessLogic.Payment.V1.PayForOrder(correlationId, DateTime.Now)
          {
             OrderStreamId = order.StreamId,
             Amount = order.TotalCost
@@ -34,12 +35,12 @@ namespace App
          await this.persistence.Save(payed);
       }
 
-      public async Task PayV2(string orderId, string correlationId)
+      public async Task Pay(string orderId, string correlationId)
       {
-         var state = new PaymentV2(StreamNumbering.NewStreamId<PaymentV2>());
+         var state = new Domain.Model.Payment.Payment(StreamNumbering.NewStreamId<Domain.Model.Payment.Payment>());
          var order = await this.persistence.GetState<DomainOrder>(orderId);
 
-         var payed = new PayForOrderV2(correlationId, DateTime.Now)
+         var payed = new PayForOrder(correlationId, DateTime.Now)
          {
             OrderStreamId = order.StreamId,
             Total = order.TotalCost,
@@ -61,7 +62,7 @@ namespace App
             return false;
          }
 
-         var state = await this.persistence.GetState<PaymentV2>(paymentId);
+         var state = await this.persistence.GetState<Domain.Model.Payment.Payment>(paymentId);
          var evn = status switch
          {
             PaymentStatus.Completed => new CompletePayment(correlationId, DateTime.Now).Execute(state) as Event,

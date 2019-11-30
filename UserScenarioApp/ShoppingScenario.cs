@@ -1,8 +1,8 @@
 ﻿using Common.General;
-using Domain.Order;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Domain.Model.Order;
 
 namespace UserScenarioApp
 {

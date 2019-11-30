@@ -1,8 +1,8 @@
-﻿using Common.Aggregate;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Common.Aggregate;
+using Domain.Model.Payment.V1;
 
-namespace Domain.Payment
+namespace Domain.Model.Payment
 {
    public class PaymentEventUpdater : IEventUpdater
    {

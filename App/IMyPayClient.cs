@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using Domain.Payment;
+using Domain.Model.Payment;
 
 namespace App
 {

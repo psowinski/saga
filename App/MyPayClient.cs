@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Common.Aggregate;
 using Common.General;
-using Domain.Payment;
+using Domain.Model.Payment;
 
 namespace App
 {

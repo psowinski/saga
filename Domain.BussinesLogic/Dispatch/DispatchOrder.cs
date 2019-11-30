@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Common.Aggregate;
+using Domain.Model.Dispatch;
 
-namespace Domain.Dispatch
+namespace Domain.BusinessLogic.Dispatch
 {
    public class DispatchOrder : Command
    {
@@ -23,13 +24,13 @@ namespace Domain.Dispatch
          if (!Items.Any()) throw new InvalidDataException(nameof(Items));
       }
 
-      public OrderDispatched Execute(Dispatch state)
+      public OrderDispatched Execute(Model.Dispatch.Dispatch state)
       {
          Validate();
          return CreateEvent(state);
       }
 
-      private OrderDispatched CreateEvent(Dispatch state)
+      private OrderDispatched CreateEvent(Model.Dispatch.Dispatch state)
       {
          var evn = CreateEvent<OrderDispatched>(state);
          evn.PaymentStreamId = PaymentStreamId;

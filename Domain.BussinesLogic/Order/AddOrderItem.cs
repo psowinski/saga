@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
 using Common.Aggregate;
+using Domain.Model.Order;
 
-namespace Domain.Order
+namespace Domain.BusinessLogic.Order
 {
    public class AddOrderItem : Command
    {
@@ -13,19 +14,19 @@ namespace Domain.Order
       public string Description { get; set;}
       public decimal Cost { get; set; }
 
-      private void Validate(Order state)
+      private void Validate(Model.Order.Order state)
       {
          if (string.IsNullOrWhiteSpace(Description)) throw new InvalidDataException(nameof(Description));
          if (state.CheckedOut) throw new ArgumentException(nameof(state.CheckedOut));
       }
 
-      public OrderItemAdded Execute(Order state)
+      public OrderItemAdded Execute(Model.Order.Order state)
       {
          Validate(state);
          return CreateEvent(state);
       }
 
-      private OrderItemAdded CreateEvent(Order state)
+      private OrderItemAdded CreateEvent(Model.Order.Order state)
       {
          var evn = CreateEvent<OrderItemAdded>(state);
          evn.Description = Description;

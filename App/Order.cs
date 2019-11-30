@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Common.Aggregate;
-using Domain.Order;
 using Persistence;
 using Common.General;
-using DomainOrder = Domain.Order.Order;
+using Domain.BusinessLogic.Order;
+using DomainOrder = Domain.Model.Order.Order;
 
 namespace App
 {

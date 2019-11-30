@@ -1,11 +1,11 @@
 ﻿using System;
 using Common.Aggregate;
 
-namespace Domain.Payment
+namespace Domain.Model.Payment.V1
 {
-   public class PaymentV1 : State
+   public class Payment : State
    {
-      public PaymentV1(string streamId) : base(streamId)
+      public Payment(string streamId) : base(streamId)
       {
       }
 

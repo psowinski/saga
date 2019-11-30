@@ -1,7 +1,8 @@
 ﻿using System;
 using Common.Aggregate;
+using Domain.Model.Payment.V1;
 
-namespace Domain.Payment
+namespace Domain.Model.Payment
 {
    public enum PaymentStatus
    {
@@ -11,9 +12,9 @@ namespace Domain.Payment
       Cancelled
    }
 
-   public class PaymentV2 : State
+   public class Payment : State
    {
-      public PaymentV2(string streamId) : base(streamId)
+      public Payment(string streamId) : base(streamId)
       {
          Status = PaymentStatus.Unpaid;
       }

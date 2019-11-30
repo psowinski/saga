@@ -1,6 +1,6 @@
 ﻿using Common.Aggregate;
 
-namespace Domain.Order
+namespace Domain.Model.Order
 {
    public class OrderItemAdded : AggregateEvent<Order>
    {

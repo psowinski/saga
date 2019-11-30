@@ -1,12 +1,13 @@
 ﻿using System;
 using System.IO;
 using Common.Aggregate;
+using Domain.Model.Payment;
 
-namespace Domain.Payment
+namespace Domain.BusinessLogic.Payment
 {
-   public class PayForOrderV2 : Command
+   public class PayForOrder : Command
    {
-      public PayForOrderV2(string correlationId, DateTime timeStamp) : base(correlationId, timeStamp)
+      public PayForOrder(string correlationId, DateTime timeStamp) : base(correlationId, timeStamp)
       {
       }
 
@@ -14,7 +15,7 @@ namespace Domain.Payment
       public decimal Total { get; set; }
       public string Description { get; set; }
 
-      private void Validate(PaymentV2 state)
+      private void Validate(Model.Payment.Payment state)
       {
          if (string.IsNullOrWhiteSpace(OrderStreamId)) throw new InvalidDataException(nameof(OrderStreamId));
          if (Total <= 0) throw new InvalidDataException(nameof(Total));
@@ -23,13 +24,13 @@ namespace Domain.Payment
          if(state.Status != PaymentStatus.Unpaid) throw new InvalidDataException(nameof(state.Status));
       }
 
-      public PaymentRequested Execute(PaymentV2 state)
+      public PaymentRequested Execute(Model.Payment.Payment state)
       {
          Validate(state);
          return CreateEvent(state);
       }
 
-      private PaymentRequested CreateEvent(PaymentV2 state)
+      private PaymentRequested CreateEvent(Model.Payment.Payment state)
       {
          var evn = CreateEvent<PaymentRequested>(state);
          evn.OrderStreamId = OrderStreamId;

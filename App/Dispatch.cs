@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Common.Aggregate;
-using DomainOrder = Domain.Order.Order;
-using DomainDispatch = Domain.Dispatch.Dispatch;
-using Domain.Dispatch;
+using DomainOrder = Domain.Model.Order.Order;
+using DomainDispatch = Domain.Model.Dispatch.Dispatch;
 using Persistence;
 using Common.General;
+using Domain.BusinessLogic.Dispatch;
 
 namespace App
 {

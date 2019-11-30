@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using Common.Aggregate;
 
-namespace Domain.Dispatch
+namespace Domain.Model.Dispatch
 {
    public class Dispatch : State
    {

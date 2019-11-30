@@ -8,7 +8,7 @@ namespace Saga
    public class PendingEvents
    {
       private readonly TimeSpan firstDelay = new TimeSpan(0, 0, 0, 0, 100);
-      private readonly TimeSpan maxDelay = new TimeSpan(0, 20, 0);
+      private readonly TimeSpan maxDelay = new TimeSpan(0, 5, 0);
 
       private readonly Dictionary<Indexed, (DateTime WaitUntil, TimeSpan LastDelay)> events = 
          new Dictionary<Indexed, (DateTime WaitUntil, TimeSpan LastDelay)>();

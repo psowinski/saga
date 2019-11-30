@@ -1,12 +1,13 @@
 ﻿using System;
 using System.IO;
 using Common.Aggregate;
+using Domain.Model.Payment.V1;
 
-namespace Domain.Payment
+namespace Domain.BusinessLogic.Payment.V1
 {
-   public class PayForOrderV1 : Command
+   public class PayForOrder : Command
    {
-      public PayForOrderV1(string correlationId, DateTime timeStamp) : base(correlationId, timeStamp)
+      public PayForOrder(string correlationId, DateTime timeStamp) : base(correlationId, timeStamp)
       {
       }
 
@@ -19,13 +20,13 @@ namespace Domain.Payment
          if (Amount <= 0) throw new InvalidDataException(nameof(Amount));
       }
 
-      public OrderPaid Execute(PaymentV1 state)
+      public OrderPaid Execute(Model.Payment.V1.Payment state)
       {
          Validate();
          return CreateEvent(state);
       }
 
-      private OrderPaid CreateEvent(PaymentV1 state)
+      private OrderPaid CreateEvent(Model.Payment.V1.Payment state)
       {
          var evn = CreateEvent<OrderPaid>(state);
          evn.OrderStreamId = OrderStreamId;
